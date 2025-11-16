@@ -1,0 +1,38 @@
+# Node modules
+/node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+/dist
+/build
+/.next
+/out
+/.nuxt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage
+/coverage
+
+# Optional: lock files if you want to ignore them
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
