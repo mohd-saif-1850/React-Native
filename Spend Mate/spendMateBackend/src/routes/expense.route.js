@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { isAuthenticated } from "../middleware/auth.js"
-import { createExpense, deleteExpense, getMonthlyExpenses, getTotalExpenses, getUserExpenses, updateExpense } from '../controllers/expense.controller.js';
+import { createExpense, deleteExpense, getMonthlyExpenses, getPreviousMonthExpenses, getTotalExpenses, getUserExpenses, updateExpense } from '../controllers/expense.controller.js';
 
 const router = Router()
 
@@ -11,5 +11,6 @@ router.route("/delete-expense/:id").delete(isAuthenticated,deleteExpense)
 router.route("/all-expenses").get(isAuthenticated,getUserExpenses)
 router.route("/monthly-spend").get(isAuthenticated,getMonthlyExpenses)
 router.route("/total-spend").get(isAuthenticated,getTotalExpenses)
+router.route("/previous-month-spend").get(isAuthenticated,getPreviousMonthExpenses)
 
 export default router;
