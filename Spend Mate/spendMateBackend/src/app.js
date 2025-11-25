@@ -2,7 +2,8 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { deleteUnverifiedUsers } from "./utils/cleanUp.js";
-
+import apiError from './utils/apiError.js';
+import apiResponse from './utils/apiResponse.js';
 
 
 const app = express()
@@ -36,6 +37,20 @@ app.use("/api/v1/feedback", feedbackRouter);
 app.use("/api/v1/report", reportRouter);
 
 app.use("/api/v1", refineTitleRouter);
+
+app.use((err, req, res, next) => {
+  if (err instanceof apiError) {
+    return res.status(err.statusCode).json({
+      message: err.message
+    });
+  }
+
+  console.error("SERVER ERROR:", err);
+
+  return res.status(500).json({
+    message: "Internal Server Error"
+  });
+});
 
 //Automatic delete the unverified user after 10 minutes 
 setInterval(deleteUnverifiedUsers, 10 * 60 * 1000);
