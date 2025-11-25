@@ -11,8 +11,7 @@ app.use(cors({
     origin: [
         "http://localhost:8081",
         "exp://10.44.173.149:8081"
-    ],
-    credentials: true,
+    ]
 }))
 
 app.use(express.json())
