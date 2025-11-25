@@ -35,26 +35,49 @@ export default function Register() {
     primary: ["#4F46E5", "#6D5DF6"],
   };
 
-  const handleRegister = async () => {
-    setError("")
-    setMsg("")
-    try {
-        const res = await axios.post(
-            `${process.env.EXPO_PUBLIC_BACKEND}/user/create-user`,{
-                username,
-                email,
-                mobileNo,
-                password
-            }
-        )
+    const handleRegister = async () => {
+        setError("");
+        setMsg("");
 
-        setMsg("Account Created Successfully !")
-    
-        // router.replace("/login");
-    } catch (error) {
-        setError("User Failed to Register !")
-    }
-  };
+        if (!username || !email || !mobileNo || !password) {
+            setError("All fields are required");
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError("Enter a valid email address");
+            return;
+        }
+
+        if (!/^\d{10}$/.test(mobileNo)) {
+            setError("Mobile number must be 10 digits");
+            return;
+        }
+
+        if (mobileNo.startsWith("0")) {
+            setError("Mobile number cannot start with 0");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
+            return;
+        }
+
+        try {
+            const res = await axios.post(
+            `${process.env.EXPO_PUBLIC_BACKEND}/user/create-user`,
+            { username, email, mobileNo, password }
+            );
+
+            setMsg(res.data?.message || "Account created successfully ✅");
+            router.replace("/login");
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Registration failed");
+        }
+    };
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -156,7 +179,7 @@ export default function Register() {
                 {msg}
                 </Text>
             ) : null}
-            
+
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.placeholder }]}>
               Already have an account?

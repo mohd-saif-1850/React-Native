@@ -8,7 +8,10 @@ import { deleteUnverifiedUsers } from "./utils/cleanUp.js";
 const app = express()
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: [
+        "http://localhost:8081",
+        "exp://10.44.173.149:8081"
+    ],
     credentials: true,
 }))
 
