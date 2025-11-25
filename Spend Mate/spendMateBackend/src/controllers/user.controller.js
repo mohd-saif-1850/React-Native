@@ -54,7 +54,7 @@ const createUser = async (req,res) => {
         throw new apiError(500,`Server Failed to create the User with username ${username} !`)
     }
 
-    await sendOtpVerificationEmail(email, username, otp);
+    // await sendOtpVerificationEmail(email, username, otp);
 
     return res.status(200).json(
         new apiResponse(200,`${username} created Successfully - Please Verify Your Account !`,user)
