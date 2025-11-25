@@ -24,12 +24,16 @@ app.get("/", (req, res) => {
 // Now this part is for the Routes 
 import userRouter from "./routes/user.route.js";
 import expenseRouter from "./routes/expense.route.js";
+import feedbackRouter from "./routes/feedback.route.js";
+import reportRouter from "./routes/report.route.js";
 import refineTitleRouter from "./routes/refineTitle.route.js";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/expense", expenseRouter);
-app.use("/api/v1", refineTitleRouter);
+app.use("/api/v1/feedback", feedbackRouter);
+app.use("/api/v1/report", reportRouter);
 
+app.use("/api/v1", refineTitleRouter);
 
 //Automatic delete the unverified user after 10 minutes 
 setInterval(deleteUnverifiedUsers, 10 * 60 * 1000);
