@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { isAuthenticated } from "../middleware/auth.js"
 import { upload } from "../middleware/multer.js"
-import { createUser, deleteUser, loginUser, logoutUser, resetPassword, sendForgotEmail, tutorial, updateNPG, updateUser, verifyForgotOtp, verifyUser } from '../controllers/user.controller.js'
+import { createUser, deleteUser, getUser, loginUser, logoutUser, resetPassword, sendForgotEmail, tutorial, updateNPG, updateUser, verifyForgotOtp, verifyUser } from '../controllers/user.controller.js'
 
 
 const router = Router()
@@ -12,6 +12,7 @@ router.route("/verify-user").patch(verifyUser)
 router.route("/send-forgot-pass-email").post(sendForgotEmail)
 router.route("/verify-forgot-otp").patch(verifyForgotOtp)
 router.route("/reset-password").patch(resetPassword)
+router.route("/get-user").patch(isAuthenticated,getUser)
 
 //Authenticated Routes 
 router.route("/update-user").patch(isAuthenticated,updateUser)

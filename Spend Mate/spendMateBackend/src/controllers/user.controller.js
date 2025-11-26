@@ -245,6 +245,24 @@ const sendForgotEmail = async (req,res) => {
 
 }
 
+const getUser = async (req, res) => {
+    const userId = req.user?._id;
+
+    if (!userId) {
+        throw new apiError(401, "User not authenticated");
+    }
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
+
+    return res.status(200).json(
+        new apiResponse(200, "User fetched successfully", user)
+    );
+};
+
 const verifyForgotOtp = async (req,res) => {
     const { email, otp} = req.body
 
@@ -338,5 +356,6 @@ export {
     sendForgotEmail,
     verifyForgotOtp,
     resetPassword,
-    tutorial
+    tutorial,
+    getUser
 }
