@@ -12,7 +12,7 @@ router.route("/verify-user").patch(verifyUser)
 router.route("/send-forgot-pass-email").post(sendForgotEmail)
 router.route("/verify-forgot-otp").patch(verifyForgotOtp)
 router.route("/reset-password").patch(resetPassword)
-router.route("/get-user").patch(isAuthenticated,getUser)
+router.route("/get-user").get(isAuthenticated,getUser)
 
 //Authenticated Routes 
 router.route("/update-user").patch(isAuthenticated,updateUser)
