@@ -313,7 +313,7 @@ const tutorial = async (req,res) => {
         throw new  apiError(404,"User Id not Found - Please Login First !")
     }
 
-    const user = await User.findOne(userId)
+    const user = await User.findById(userId)
 
     if (!user) {
         throw new apiError(404,"User not Found !")
