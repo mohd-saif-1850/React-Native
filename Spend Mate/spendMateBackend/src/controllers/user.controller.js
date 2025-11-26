@@ -324,26 +324,27 @@ const resetPassword = async (req, res) => {
     )
 }
 
-const tutorial = async (req,res) => {
-    const userId = req.user?._id
+const tutorial = async (req, res) => {
+  const userId = req.user?._id;
 
-    if (!userId) {
-        throw new  apiError(404,"User Id not Found - Please Login First !")
-    }
+  if (!userId) {
+    throw new apiError(404, "User Id not Found - Please Login First");
+  }
 
-    const user = await User.findById(userId)
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { tutorial: false },
+    { new: true }
+  ).select("-password");
 
-    if (!user) {
-        throw new apiError(404,"User not Found !")
-    }
+  if (!updatedUser) {
+    throw new apiError(404, "User not Found");
+  }
 
-    user.tutorial = false
-    await user.save()
-
-    return res.status(200).json(
-        new apiResponse(200,"Toturial is Completed !")
-    )
-}
+  return res.status(200).json(
+    new apiResponse(200, "Tutorial Completed", updatedUser)
+  );
+};
 
 export {
     createUser,
