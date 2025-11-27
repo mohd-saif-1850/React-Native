@@ -26,7 +26,7 @@ export const refineTitle = async (req, res) => {
 
     return res
       .status(200)
-      .json(new apiResponse(200, "Refined title generated", refined));
+      .json(new apiResponse(200, "Refined title generated", {refined}));
   } catch (error) {
     return res
       .status(error.code || 500)
