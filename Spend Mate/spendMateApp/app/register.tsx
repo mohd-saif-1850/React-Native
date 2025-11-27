@@ -72,7 +72,7 @@ export default function Register() {
             );
 
             setMsg(res.data?.message || "Account created successfully ✅");
-            router.replace("/login");
+            router.push(`/verify-otp?email=${email}`);
         } catch (err: any) {
             setError(err.response?.data?.message || "Registration failed");
         }

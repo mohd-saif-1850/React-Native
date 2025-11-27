@@ -12,11 +12,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Login() {
   const theme = useColorScheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [msg,setMsg] = useState("")
+  const [error,setError] = useState("")
 
   const colors = {
     bg: theme === "dark" ? "#0D0D0D" : "#F8F9FA",
@@ -27,10 +32,49 @@ export default function Login() {
     primary: ["#4F46E5", "#6D5DF6"],
   };
 
-  const handleLogin = () => {
-    // ✅ later add backend auth
-    router.replace("/(tabs)");
-  };
+
+const handleLogin = async () => {
+  setError("");
+  setMsg("");
+
+  if (!email || !password) {
+    setError("Email and password are required");
+    return;
+  }
+
+  try {
+    const res = await axios.post(
+      `${process.env.EXPO_PUBLIC_BACKEND}/user/login-user`,
+      { email, password }
+    );
+
+    const user = res.data?.user;
+
+    if (!user) {
+      setError("Login failed");
+      return;
+    }
+
+    const token = res.data?.token;
+
+    // ✅ SAVE TOKEN SO USER STAYS LOGGED IN
+    if (token) {
+      await SecureStore.setItemAsync("spendmate_token", token);
+    }
+
+    if (user.verified === false) {
+      router.replace(`/verify-otp?email=${email}`);
+      return;
+    }
+    await AsyncStorage.setItem("spendmate_token", res.data.token);
+    router.replace("/tutorial");
+
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Login failed");
+  }
+};
+
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -76,6 +120,24 @@ export default function Login() {
               },
             ]}
           />
+
+          {error ? (
+            <Text style={{ color: "red", textAlign: "center", marginTop: -6 }}>
+              {error}
+            </Text>
+          ) : null}
+
+          {msg ? (
+            <Text
+              style={{
+                color: colors.placeholder,
+                textAlign: "center",
+                marginTop: -6,
+              }}
+            >
+              {msg}
+            </Text>
+          ) : null}
 
           <LinearGradient
             colors={["#4F46E5", "#6D5DF6"]}
