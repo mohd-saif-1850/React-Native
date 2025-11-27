@@ -6,6 +6,7 @@ import {
   useColorScheme,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -75,7 +76,7 @@ export default function TabsHome() {
           <View style={styles.row}>
             <Feather name="shield" size={22} color={colors.text} />
             <Text style={[styles.feature, { color: colors.text }]}>
-              Private and secure by design
+              Private and Secure
             </Text>
           </View>
         </View>
@@ -105,18 +106,25 @@ export default function TabsHome() {
           </Text>
         </TouchableOpacity>
 
-        <Text style={[styles.footer, { color: colors.sub }]}>
-          Designed and developed by Mohd Saif
-        </Text>
+        <TouchableOpacity
+          style={styles.footerBox}
+          onPress={() => Linking.openURL("https://github.com/mohd-saif-1850")}
+        >
+          <Ionicons name="logo-github" size={20} color={colors.sub} />
+          <Text style={[styles.footerText, { color: colors.sub }]}>
+            Designed & Developed by{" "}
+            <Text style={{ fontWeight: "700", color: colors.text }}>
+              Mohd Saif
+            </Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   scroll: {
     paddingHorizontal: 26,
     paddingTop: 20,
@@ -181,8 +189,14 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textDecorationLine: "underline",
   },
-  footer: {
+
+  footerBox: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  footerText: {
     fontSize: 14,
-    marginTop: 20,
   },
 });

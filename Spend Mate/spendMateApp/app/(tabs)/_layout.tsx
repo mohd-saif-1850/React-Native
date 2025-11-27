@@ -33,6 +33,16 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
+        name="add-expense"
+        options={{
+          title: "Add Expense",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="add-circle" color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="all-expense"
         options={{
           title: "All Expenses",
@@ -43,11 +53,11 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="add-expense"
+        name="profile"
         options={{
-          title: "Add Expense",
+          title: "Profile",
           tabBarIcon: ({ color }) => (
-            <Ionicons size={28} name="add-circle" color={color} />
+            <Ionicons size={28} name="person" color={color} />
           ),
         }}
       />
