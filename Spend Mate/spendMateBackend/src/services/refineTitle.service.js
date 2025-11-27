@@ -11,7 +11,7 @@ User Title: "${clean}"
 Rules:
 - Improve the title in a natural way.
 - Fix spelling/mistakes.
-- Make it short & clear (3–6 words).
+- Make it short & clear (3-6 words).
 - MUST be different from the original.
 - Return ONLY the improved title. No explanation.
 `;
@@ -25,7 +25,6 @@ Rules:
     response.output_text?.trim() ||
     response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
-  // Safety: never empty or same
   if (!refined || refined.toLowerCase() === clean.toLowerCase()) {
     refined = `Expense: ${clean}`;
   }
