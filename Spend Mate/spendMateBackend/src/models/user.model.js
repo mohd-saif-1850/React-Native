@@ -68,7 +68,7 @@ const userSchema = new Schema({
     },
     subscription: {
         type: Boolean,
-        default: false
+        default: true
     }
 
 
