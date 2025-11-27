@@ -185,7 +185,7 @@ const deleteUser = async (req,res) => {
 }
 
 const updateNPG = async (req, res) => {
-    const { name, gender } = req.body
+    const { dob, gender } = req.body
     const userId = req.user._id
 
     if (!userId) {
@@ -203,7 +203,7 @@ const updateNPG = async (req, res) => {
 
     const updates = {}
 
-    if (name) updates.name = name
+    if (dob) updates.dob = dob
     if (gender) updates.gender = gender
     if (profileUrl) updates.profileUrl = profileUrl
 
