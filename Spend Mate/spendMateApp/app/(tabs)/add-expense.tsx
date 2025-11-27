@@ -32,7 +32,8 @@ export default function AddExpense() {
   const [time, setTime] = useState(new Date());
   const [openTime, setOpenTime] = useState(false);
   const [popup, setPopup] = useState("");
-  const [refining, setRefining] = useState(false);
+  const [refiningTitle, setRefiningTitle] = useState(false);
+  const [refiningDescription, setRefiningDescription] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const colors = {
@@ -56,36 +57,123 @@ export default function AddExpense() {
     "Other",
   ];
 
-  const refineWithAI = async () => {
+  const formatTimeWithoutSeconds = (date : Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+
+    const period = hours >= 12 ? "PM" : "AM";
+    const hr = hours % 12 || 12;
+    const min = minutes < 10 ? `0${minutes}` : minutes;
+
+    return `${hr}:${min} ${period}`;
+  };
+
+  const getTokenOrFail = async () => {
+    const token = await SecureStore.getItemAsync("spendmate_token");
+    if (!token) {
+      setPopup("Not authenticated. Please login.");
+      return null;
+    }
+    return token;
+  };
+
+  const refineTitleWithAI = async () => {
+    console.log("TITLE BUTTON CLICKED");
+
     if (!title.trim()) {
       setPopup("Enter a title first");
       return;
     }
-    setRefining(true);
+
+    setRefiningTitle(true);
+
     try {
-      const token = await SecureStore.getItemAsync("spendmate_token");
+      const token = await getTokenOrFail();
+      if (!token) return setRefiningTitle(false);
+
+      const url = `${process.env.EXPO_PUBLIC_BACKEND}/refine-title`;
+
       const res = await axios.post(
-        `${process.env.EXPO_PUBLIC_BACKEND}/api/v1/refine-title`,
+        url,
         { title },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const refined = res?.data?.data?.refined;
-      if (refined) {
-        setTitle(refined);
-        setPopup("Title refined");
+
+
+      const refinedTitle =
+        res?.data?.data?.refinedTitle ??
+        res?.data?.data?.refined ??
+        null;
+
+      if (typeof refinedTitle === "string" && refinedTitle.trim()) {
+        setTitle(refinedTitle.trim());
       } else {
-        const msg = res?.data?.message || "AI did not return a refined title";
-        setPopup(msg);
+        setPopup("AI refine returned no title. Check server response in logs.");
+        console.warn("Unexpected refine-title response:", res.data);
       }
-    } catch (err : any) {
-      const msg = err?.response?.data?.message || err?.message || "AI refine failed";
-      if (msg === "Only the Subscribed Users can use this Feature !") {
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        "AI refine failed";
+      if (msg && typeof msg === "string" && msg.includes("Subscription")) {
         router.push("/subscription");
       } else {
         setPopup(msg);
       }
     } finally {
-      setRefining(false);
+      setRefiningTitle(false);
+    }
+  };
+
+  const refineDescriptionWithAI = async () => {
+    console.log("DESCRIPTION BUTTON CLICKED");
+
+    if (!title.trim()) {
+      setPopup("Enter title first to generate/refine description");
+      return;
+    }
+
+    setRefiningDescription(true);
+
+    try {
+      const token = await getTokenOrFail();
+      if (!token) return setRefiningDescription(false);
+
+      const url = `${process.env.EXPO_PUBLIC_BACKEND}/refine-description`;
+
+      const res = await axios.post(
+        url,
+        { title, description },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+
+      const refinedDesc =
+        res?.data?.data?.refinedDescription ??
+        res?.data?.data?.refined ??
+        null;
+
+      if (typeof refinedDesc === "string" && refinedDesc.trim()) {
+        setDescription(refinedDesc.trim());
+      } else {
+        setPopup("AI refine returned no description. Check server response in logs.");
+        console.warn("Unexpected refine-description response:", res.data);
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        "AI refine failed";
+      if (msg && typeof msg === "string" && msg.includes("Subscription")) {
+        router.push("/subscription");
+      } else {
+        setPopup(msg);
+      }
+    } finally {
+      setRefiningDescription(false);
     }
   };
 
@@ -94,13 +182,19 @@ export default function AddExpense() {
       setPopup("Please fill required fields: title, amount and category");
       return;
     }
+
     setCreating(true);
     try {
-      const token = await SecureStore.getItemAsync("spendmate_token");
+      const token = await getTokenOrFail();
+      if (!token) return setCreating(false);
+
       const formattedDate = date.toISOString().split("T")[0];
       const formattedTime = time.toLocaleTimeString();
-      await axios.post(
-        `${process.env.EXPO_PUBLIC_BACKEND}/api/v1/expense/create-expense`,
+
+      const url = `${process.env.EXPO_PUBLIC_BACKEND}/expense/create-expense`;
+
+      const res = await axios.post(
+        url,
         {
           title,
           amount,
@@ -112,9 +206,13 @@ export default function AddExpense() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       router.replace("/(tabs)/all-expense");
-    } catch (err : any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to create expense";
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create expense";
       setPopup(msg);
     } finally {
       setCreating(false);
@@ -133,18 +231,21 @@ export default function AddExpense() {
           placeholderTextColor={colors.sub}
           style={[styles.input, { color: colors.text, borderColor: colors.stroke, backgroundColor: colors.card }]}
         />
-        <TouchableOpacity
-          style={[styles.aiBtn, { backgroundColor: colors.primary }]}
-          onPress={refineWithAI}
-          disabled={refining}
-        >
-          {refining ? (
-            <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
-          ) : (
-            <Ionicons name="sparkles-outline" size={18} color="#FFF" style={{ marginRight: 8 }} />
-          )}
-          <Text style={styles.aiText}>Refine</Text>
-        </TouchableOpacity>
+
+        <View style={{ flexDirection: "row" }}>
+          <TouchableOpacity
+            style={[styles.aiBtn, { backgroundColor: colors.primary, marginRight: 10 }]}
+            onPress={refineTitleWithAI}
+            disabled={refiningTitle}
+          >
+            {refiningTitle ? (
+              <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
+            ) : (
+              <Ionicons name="sparkles-outline" size={18} color="#FFF" style={{ marginRight: 8 }} />
+            )}
+            <Text style={styles.aiText}>Refine Title</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={[styles.label, { color: colors.text }]}>Amount</Text>
         <TextInput
@@ -190,11 +291,26 @@ export default function AddExpense() {
           value={description}
           onChangeText={setDescription}
           placeholder="Optional notes"
+          multiline
+          numberOfLines={4}
           placeholderTextColor={colors.sub}
           style={[styles.input, { color: colors.text, borderColor: colors.stroke, backgroundColor: colors.card }]}
         />
 
-        <TouchableOpacity style={[styles.selector, { borderColor: colors.stroke }]} onPress={() => setOpenDate(true)}>
+        <TouchableOpacity
+          style={[styles.aiBtn, { backgroundColor: colors.primary, marginTop: 6 }]}
+          onPress={refineDescriptionWithAI}
+          disabled={refiningDescription}
+        >
+          {refiningDescription ? (
+            <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
+          ) : (
+            <Ionicons name="sparkles-outline" size={18} color="#FFF" style={{ marginRight: 8 }} />
+          )}
+          <Text style={styles.aiText}>Refine Description</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setOpenDate(true)} style={[styles.selector, { borderColor: colors.stroke }]}>
           <Ionicons name="calendar-outline" size={20} color={colors.sub} />
           <Text style={[styles.selectorText, { color: colors.text }]}>{date.toDateString()}</Text>
         </TouchableOpacity>
@@ -213,7 +329,7 @@ export default function AddExpense() {
 
         <TouchableOpacity style={[styles.selector, { borderColor: colors.stroke }]} onPress={() => setOpenTime(true)}>
           <Ionicons name="time-outline" size={20} color={colors.sub} />
-          <Text style={[styles.selectorText, { color: colors.text }]}>{time.toLocaleTimeString()}</Text>
+          <Text style={[styles.selectorText, { color: colors.text }]}>{formatTimeWithoutSeconds(time)}</Text>
         </TouchableOpacity>
 
         {openTime && (
@@ -255,7 +371,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     padding: 18,
-    gap: 12,
   },
   label: { fontSize: 13, fontWeight: "600" },
   input: {
@@ -264,11 +379,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderRadius: 10,
     borderWidth: 1,
+    marginTop: 6,
+    marginBottom: 10,
   },
   pickerBox: {
     borderWidth: 1,
     borderRadius: 10,
     overflow: "hidden",
+    marginBottom: 10,
   },
   selector: {
     flexDirection: "row",
@@ -279,6 +397,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 6,
+    marginBottom: 10,
   },
   selectorText: { fontSize: 15 },
   aiBtn: {

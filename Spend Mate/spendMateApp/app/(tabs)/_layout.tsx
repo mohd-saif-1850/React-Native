@@ -3,6 +3,7 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -15,8 +16,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         tabBarStyle: {
-          backgroundColor:
-            colorScheme === "dark" ? "#0D0D0D" : "#FFFFFF",
+          backgroundColor: colorScheme === "dark" ? "#0D0D0D" : "#FFFFFF",
           borderTopColor: "transparent",
         },
         tabBarButton: HapticTab,
@@ -31,12 +31,23 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
-        name="explore"
+        name="all-expense"
         options={{
-          title: "Explore",
+          title: "All Expenses",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
+            <Ionicons size={28} name="list" color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="add-expense"
+        options={{
+          title: "Add Expense",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="add-circle" color={color} />
           ),
         }}
       />
