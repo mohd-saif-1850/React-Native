@@ -1,19 +1,19 @@
 import { gemini } from "../utils/geminiClient.js";
 
 export const refineOnlyTitle = async (title) => {
+  const clean = title.trim();
+
   const prompt = `
-You IMPROVE an expense title.
+You refine an expense title.
 
-User Title: "${title}"
+User Title: "${clean}"
 
-RULES:
-- MUST return a better title.
-- NEVER return the same title.
-- Fix spelling errors.
-- Make it clear, human, natural.
-- 3–6 words only.
-- Do NOT add unnecessary words.
-- Return ONLY the improved title.
+Rules:
+- Improve the title in a natural way.
+- Fix spelling/mistakes.
+- Make it short & clear (3–6 words).
+- MUST be different from the original.
+- Return ONLY the improved title. No explanation.
 `;
 
   const response = await gemini.models.generateContent({
@@ -21,11 +21,13 @@ RULES:
     contents: [{ text: prompt }],
   });
 
-  let refined = response.output_text?.trim();
+  let refined =
+    response.output_text?.trim() ||
+    response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
-  // Safety: NEVER same or empty
-  if (!refined || refined.toLowerCase() === title.toLowerCase()) {
-    refined = `Expense: ${title}`;
+  // Safety: never empty or same
+  if (!refined || refined.toLowerCase() === clean.toLowerCase()) {
+    refined = `Expense: ${clean}`;
   }
 
   return refined;
