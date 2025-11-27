@@ -2,26 +2,28 @@ import { gemini } from "../utils/geminiClient.js";
 
 export const refineOrGenerateDescription = async (title, description = "") => {
   const prompt = `
-You refine or generate expense descriptions.
+You refine OR generate expense descriptions.
 
-User Title: "${title}"
-User Description: "${description || "NONE"}"
+Title: "${title}"
+Description: "${description || "NONE"}"
 
 Rules:
-- If user HAS written a description:
-    • Refine it
-    • Keep original meaning
-    • Expand naturally
-    • 10-50 words
-- If user did NOT write a description:
-    • Generate a natural 10-50 word description based on the title
+- If user already wrote a description:
+    * refine it
+    * keep the original meaning
+    * expand naturally
+    * write 10-50 words
+- If user wrote NO description:
+    * generate a natural, human-like 10-50 word description related to the title.
+
 Return ONLY the final description.
-  `;
+`;
 
   const response = await gemini.models.generateContent({
     model: "gemini-2.0-flash-lite",
     contents: [{ text: prompt }],
   });
 
-  return response.text().trim();
+  const refined = response.output_text?.trim();
+  return refined || description;
 };
