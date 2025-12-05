@@ -2,27 +2,32 @@ import { gemini } from "../utils/geminiClient.js";
 
 export const refineOrGenerateDescription = async (title, description = "") => {
   const prompt = `
-You create HUMAN-LIKE, friendly, simple expense descriptions.
+You generate HUMAN-LIKE, natural, and friendly expense descriptions.
 
-Title: "${title}"
-User Description: "${description || "NONE"}"
+INPUT:
+• Title: "${title}"
+• User Description: "${description || "NONE"}"
 
-STYLE RULES:
-- Sound like a real person writing their own expense note.
-- Be casual, clear, simple, and natural.
-- 20-40 words max.
-- No corporate tone.
-- No robotic or formal language.
-- No repeating the title.
-- No unnecessary details.
-- If the user wrote something:
-    • Fix it
-    • Expand it naturally
-    • Keep their meaning
-- If the user wrote nothing:
-    • Create a friendly short description
-    • Related to the title (what the user likely spent on)
-- RETURN ONLY THE FINAL DESCRIPTION.
+GUIDELINES:
+- Write like a real person casually describing their expense.
+- Tone: simple, clear, relatable, friendly.
+- Length: 20–40 words.
+- Do NOT repeat or rephrase the title.
+- No robotic, corporate, or overly formal language.
+- No generic or repeated patterns — vary the writing each time.
+- Keep it relevant to the title and the user's intention.
+
+WHEN USER NOTE IS PROVIDED:
+- Fix grammar and phrasing.
+- Expand it slightly in a natural way.
+- Keep the original meaning fully intact.
+
+WHEN USER NOTE IS EMPTY:
+- Create a short, natural, human-sounding description.
+- Make it realistically connected to the title (what someone would spend on).
+
+OUTPUT:
+Return ONLY the final description. No extra text.
 `;
 
   const response = await gemini.models.generateContent({
