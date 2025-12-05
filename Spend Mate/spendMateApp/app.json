@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "spendMateApp",
+    "name": "Spend Mate App",
     "slug": "spendMateApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "scheme": "spendmateapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,16 +14,17 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundImage": "./assets/icon.png",
+        "monochromeImage": "./assets/icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.mohd_saif_1850.spendMateApp"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-router",
@@ -44,6 +45,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ed7fc28d-ed03-4cdf-b0bb-fab311c45062"
+      }
     }
   }
 }

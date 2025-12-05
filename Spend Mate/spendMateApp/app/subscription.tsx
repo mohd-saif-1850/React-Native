@@ -1,14 +1,14 @@
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import {
-  View,
-  Text,
   StyleSheet,
-  useColorScheme,
+  Text,
   TouchableOpacity,
+  useColorScheme,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
 
 export default function Subscription() {
   const theme = useColorScheme();
@@ -92,13 +92,13 @@ export default function Subscription() {
           disabled
           style={[styles.disabledBtn, { backgroundColor: colors.disabled }]}
         >
-          <Text style={styles.disabledText}>Coming Soon</Text>
+          <Text style={styles.disabledText}>14-Days Free</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.noteBox}>
         <Text style={[styles.note, { color: colors.sub }]}>
-          Subscription features are under development and will be available soon.
+          Your 14-day trial has started. Enjoy premium features and explore everything freely.
         </Text>
       </View>
     </SafeAreaView>
