@@ -2,12 +2,14 @@ import mongoose,{ Schema, Document, Types} from "mongoose";
 
 export interface UserValidation extends Document{
     _id: Types.ObjectId,
+    username?: string,
     email: string,
     otp?: number,
     otpExp?: Date,
     verified: boolean,
     image?: string,
     name?: string,
+    gender?: string,
     about?: string
 }
 
@@ -15,6 +17,12 @@ const userSchema : Schema<UserValidation> = new Schema({
     name: {
         type: String,
         default: "Unknown"
+    },
+    username: {
+        type: String,
+        index: true,
+        trim: true,
+        lowercase: true
     },
     email: {
         type: String,
@@ -32,6 +40,11 @@ const userSchema : Schema<UserValidation> = new Schema({
     verified: {
         type: Boolean,
         default: false
+    },
+    gender: {
+        type: String,
+        enum: ["Male","Female","Other","Not Specified"],
+        default: "Not Specified"
     },
     image: {
         type: String,
