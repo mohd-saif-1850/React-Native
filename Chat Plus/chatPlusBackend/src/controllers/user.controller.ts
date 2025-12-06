@@ -8,7 +8,7 @@ const loginUser = async (req : Request,res : Response) => {
     const { email } = req.body
 
     if (!email) {
-        throw new ApiError(404,"Email is Required !")
+        throw new ApiError(400,"Email is Required !")
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000)
@@ -19,27 +19,23 @@ const loginUser = async (req : Request,res : Response) => {
     })
 
     if (user && user?.verified != true) {
-        const otp = Math.floor(100000 + Math.random() * 900000)
-        const otpExp = new Date(Date.now() + 10 * 60 * 1000)
 
-        await sendVerifyEmail(email, otp.toString())
         user.otp = otp
         user.otpExp = otpExp
         await user?.save()
+        await sendVerifyEmail(email, otp.toString())
 
         return res.status(200).json(
             new ApiResponse(true,"Please Verify Your Account !")
         )
     } 
     if(user && user?.verified == true){
-        const otp = Math.floor(100000 + Math.random() * 900000)
-        const otpExp = new Date(Date.now() + 10 * 60 * 1000)
 
-        await sendVerifyEmail(email, otp.toString())
-        user.otp = otp,
+        user.otp = otp
         user.otpExp = otpExp
         await user.save()
-
+        await sendVerifyEmail(email, otp.toString())
+        
         return res.status(200).json(
             new ApiResponse(true,"Please Enter the Otp !")
         )
@@ -62,6 +58,35 @@ const loginUser = async (req : Request,res : Response) => {
     )
 }
 
+const verifyUser = async (req: Request, res: Response) => {
+    const { email, otp } = req.body
+
+    if (!email) {
+        throw new ApiError(400,"Email is Required !")
+    }
+    if (!otp) {
+        throw new ApiError(400,"Otp is Required !")
+    }
+
+    const user = await User.findOne({
+        email
+    })
+
+    if (!user) {
+        throw new ApiError(404,"User Not Found !")
+    }
+
+    user.verified = true
+    user.otp = undefined
+    user.otpExp = undefined
+    await user.save()
+
+    return res.status(200).json(
+        new ApiResponse(true, "User Verified Successfully !")
+    )
+}
+
 export {
-    loginUser
+    loginUser,
+    verifyUser
 }
