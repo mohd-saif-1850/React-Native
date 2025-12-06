@@ -124,8 +124,56 @@ const updateUser = async (req: Request, res: Response) => {
     )
 }
 
+const deleteUser = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new ApiError(400,"User Id Not Found - Please Login First !")
+    }
+
+    const user = await User.findByIdAndDelete(userId)
+
+    if (!user) {
+        throw new ApiError(500,"Server Failed to Delete the User !")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(true, "User Deleted Successfully !")
+    )
+}
+
+const tutorial = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new ApiError(400,"User Id Not Found - Please Login First !")
+    }
+
+    const user = await User.findByIdAndUpdate(userId,{
+        $set: {
+            tutorial: false
+            }
+        },{ new: true })
+
+    if(!user) {
+        throw new ApiError(404, "User Not Found!");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(true, "Tutorial Fininshed Successfully !")
+    )
+}
+
+// const updateImage = async (req: Request, res: Response) => {
+//     const userId = req.userId
+
+    
+// }
+
 export {
     loginUser,
     verifyUser,
-    updateUser
+    updateUser,
+    deleteUser,
+    tutorial
 }
