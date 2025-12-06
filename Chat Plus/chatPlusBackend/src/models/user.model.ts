@@ -10,7 +10,8 @@ export interface UserValidation extends Document{
     image?: string,
     name?: string,
     gender?: string,
-    about?: string
+    about?: string,
+    tutorial?: boolean
 }
 
 const userSchema : Schema<UserValidation> = new Schema({
@@ -53,6 +54,10 @@ const userSchema : Schema<UserValidation> = new Schema({
     about: {
         type: String,
         default: "Just Enjoying the Life !"
+    },
+    tutorial: {
+        type: Boolean,
+        default: true
     }
 },{ timestamps: true })
 
