@@ -1,7 +1,7 @@
 import nodemailer from"nodemailer"
 import { verifyEmailLayout } from "../emails/verificationEmail"
 
-export const sendVerifyEmail = async (username: string, email: string, otp: string) => {
+export const sendVerifyEmail = async (email: string, otp: string) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -14,6 +14,6 @@ export const sendVerifyEmail = async (username: string, email: string, otp: stri
     from: "Chat Plus <no-reply@chatplus.com>",
     to: email,
     subject: "Your Chat Plus Verification Code",
-    html: verifyEmailLayout(username, otp)
+    html: verifyEmailLayout(email, otp)
   });
 };

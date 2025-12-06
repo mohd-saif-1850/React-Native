@@ -1,4 +1,4 @@
-export const verifyEmailLayout = (username: string, otp: string) => {
+export const verifyEmailLayout = (email: string, otp: string) => {
   return `
   <div style="font-family: Arial, sans-serif; background:#f5f7fa; padding:30px;">
     <div style="
@@ -15,7 +15,7 @@ export const verifyEmailLayout = (username: string, otp: string) => {
       </h1>
 
       <p style="font-size:16px; margin:0 0 18px; color:#333;">
-        Hey <strong>${username}</strong>,
+        Hey <strong>${email}</strong>,
       </p>
 
       <p style="font-size:15px; line-height:1.5; margin-bottom:24px; color:#444;">
