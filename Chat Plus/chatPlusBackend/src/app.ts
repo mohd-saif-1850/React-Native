@@ -19,4 +19,9 @@ app.get("/",(req,res) => {
     res.send("App is Running Bro just Use it !")
 })
 
+//Routes Here !
+import userRoutes from "./routes/user.route"
+
+app.use("/api/v1/user",userRoutes)
+
 export default app;
