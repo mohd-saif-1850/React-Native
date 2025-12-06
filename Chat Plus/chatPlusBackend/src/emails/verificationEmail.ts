@@ -20,7 +20,7 @@ export const verifyEmailLayout = (email: string, otp: string) => {
 
       <p style="font-size:15px; line-height:1.5; margin-bottom:24px; color:#444;">
         Welcome to <strong>Chat Plus</strong>!  
-        Use the verification code below to activate your account.
+        Use the verification code below to activate or login your account.
       </p>
 
       <div style="
