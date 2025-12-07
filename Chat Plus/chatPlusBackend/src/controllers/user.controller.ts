@@ -4,6 +4,7 @@ import { sendVerifyEmail } from "../helpers/sendVerificationEmail";
 import { ApiError } from "../helpers/apiError";
 import { ApiResponse } from "../helpers/apiResponse";
 import { generateToken } from "../helpers/jwt";
+import { uploadToCloudinary } from "../helpers/cloudinary";
 
 const loginUser = async (req : Request,res : Response) => {
     const { email } = req.body
@@ -164,16 +165,43 @@ const tutorial = async (req: Request, res: Response) => {
     )
 }
 
-// const updateImage = async (req: Request, res: Response) => {
-//     const userId = req.userId
+const updateImage = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const image = req.file
 
-    
-// }
+    if (!userId) {
+        throw new ApiError(400,"User Id Not Found - Please Login First !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new ApiError(400,"User Not Found !")
+    }
+
+    if (!image) {
+        throw new ApiError(400,"No File Uploaded !")
+    }
+
+    const uploaded = await uploadToCloudinary(image?.path)
+
+    if (!uploaded) {
+        throw new ApiError(500,"Server Failed to Upload File !")
+    }
+
+    user.image = uploaded.url;
+    await user.save()
+
+    return res.status(200).json(
+        new ApiResponse(true,"File Uploaded Successfully !",{Url : uploaded.url,user})
+    )
+}
 
 export {
     loginUser,
     verifyUser,
     updateUser,
     deleteUser,
-    tutorial
+    tutorial,
+    updateImage
 }
