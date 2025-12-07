@@ -248,6 +248,36 @@ const getOnlineStatus = async (req: Request, res: Response) => {
     }
 };
 
+const searchUsers = async (req: Request, res: Response) => {
+    try {
+        const { query } = req.query;
+
+        if (!query || typeof query !== "string") {
+            return res.status(400).json({ success: false, message: "Query is required" });
+        }
+
+        const users = await User.find({
+            $or: [
+                { email: { $regex: query, $options: "i" } },
+                { username: { $regex: query, $options: "i" } }
+            ]
+        })
+        .select("name username email image online lastSeen");
+
+        return res.status(200).json({
+            success: true,
+            users
+        });
+
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: "Error searching users",
+            error: error.message
+        });
+    }
+};
+
 export {
     loginUser,
     verifyUser,
@@ -256,5 +286,6 @@ export {
     tutorial,
     updateImage,
     getLastSeen,
-    getOnlineStatus
+    getOnlineStatus,
+    searchUsers
 }

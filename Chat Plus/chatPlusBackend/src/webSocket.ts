@@ -13,7 +13,7 @@ export const registerSocketServer = (server: any) => {
 
     io.on("connection", (socket: CustomSocket) => {
 
-        socket.on("join-room", (roomId) => {
+        socket.on("join-room", (roomId: string) => {
             socket.join(roomId);
         });
 
@@ -28,6 +28,7 @@ export const registerSocketServer = (server: any) => {
                 });
 
                 io.to(roomId).emit("receive-message", savedMessage);
+
             } catch (error) {
                 console.log("Error saving message:", error);
             }
@@ -49,15 +50,33 @@ export const registerSocketServer = (server: any) => {
             io.to(roomId).emit("message-delivered", { messageId });
         });
 
-        socket.on("message-seen", async ({ messageId, roomId }) => {
+        socket.on("message-seen", async ({ messageId, roomId, userId }) => {
             await Message.findByIdAndUpdate(messageId, {
-                seenAt: new Date()
+                seenAt: new Date(),
+                $addToSet: { readBy: userId }
             });
 
-            io.to(roomId).emit("message-seen", { messageId });
+            io.to(roomId).emit("message-seen", { messageId, userId });
         });
 
-        socket.on("user-online", async (userId) => {
+        socket.on("delete-for-me", async ({ messageId, roomId, userId }) => {
+            await Message.findByIdAndUpdate(messageId, {
+                $addToSet: { deletedFor: userId }
+            });
+
+            socket.emit("message-deleted-me", { messageId });
+        });
+
+        socket.on("delete-for-everyone", async ({ messageId, roomId }) => {
+            await Message.findByIdAndUpdate(messageId, {
+                message: "",
+                deletedFor: []
+            });
+
+            io.to(roomId).emit("message-deleted-all", { messageId });
+        });
+
+        socket.on("user-online", async (userId: string) => {
             socket.userId = userId;
 
             await User.findByIdAndUpdate(userId, { online: true });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, getLastSeen, getOnlineStatus, loginUser, tutorial, updateImage, updateUser, verifyUser } from "../controllers/user.controller";
+import { deleteUser, getLastSeen, getOnlineStatus, loginUser, searchUsers, tutorial, updateImage, updateUser, verifyUser } from "../controllers/user.controller";
 import { isAuthenticated } from "../middleware/auth.middleware";
 import { upload } from "../middleware/multer";
 
@@ -13,5 +13,6 @@ router.route("/tutorial").delete(isAuthenticated,tutorial)
 router.route("/update-image").patch(isAuthenticated,upload.single("file"),updateImage)
 router.route("/last-seen/:id").get(isAuthenticated,getLastSeen)
 router.route("/online/:id").get(isAuthenticated,getOnlineStatus)
+router.route("/search-user").get(isAuthenticated,searchUsers)
 
 export default router;

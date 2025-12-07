@@ -51,7 +51,7 @@ const getAllChats = async (req: Request, res: Response) => {
         const result = [];
 
         for (const chat of chats) {
-            const friendId = chat.members.find((m: string) => m !== userId);
+            const friendId = chat.members.find((m: any) => m !== userId);
 
             const friend = await User.findById(friendId)
                 .select("name username image online lastSeen")
@@ -76,8 +76,57 @@ const getAllChats = async (req: Request, res: Response) => {
     }
 };
 
+const markAsRead = async (req: Request, res: Response) => {
+    try {
+        const { messageId } = req.body;
+        const userId = req.userId;
+
+        await Message.findByIdAndUpdate(messageId, {
+            $addToSet: { readBy: userId },
+            seenAt: new Date()
+        });
+
+        return res.status(200).json({ success: true });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+const deleteForMe = async (req: Request, res: Response) => {
+    try {
+        const { messageId } = req.body;
+        const userId = req.userId;
+
+        await Message.findByIdAndUpdate(messageId, {
+            $addToSet: { deletedFor: userId }
+        });
+
+        return res.status(200).json({ success: true });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+const deleteForEveryone = async (req: Request, res: Response) => {
+    try {
+        const { messageId } = req.body;
+
+        await Message.findByIdAndUpdate(messageId, {
+            message: "",
+            deletedFor: []
+        });
+
+        return res.status(200).json({ success: true });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 export {
     createChat,
     getMessages,
-    getAllChats
+    getAllChats,
+    markAsRead,
+    deleteForEveryone,
+    deleteForMe
 };
