@@ -1,98 +1,231 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useState } from "react"
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  StyleSheet,
+  useColorScheme,
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import axios from "axios"
+import * as SecureStore from "expo-secure-store"
+import { router } from "expo-router"
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+type ChatItem = {
+  chatId: string
+  friend: {
+    name: string
+    username?: string
+    image?: string | null
+    online?: boolean
+    lastSeen?: string | null
+  }
+  lastMessage?: string | null
+  lastMessageTime?: string | null
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default function Chats() {
+  const theme = useColorScheme()
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [chats, setChats] = useState<ChatItem[]>([])
+  const [error, setError] = useState("")
+
+  const fetchChats = useCallback(async () => {
+    try {
+      setError("")
+      const token = await SecureStore.getItemAsync("token")
+      if (!token) {
+        setChats([])
+        setLoading(false)
+        return
+      }
+
+      const res = await axios.get(`${process.env.EXPO_PUBLIC_BACKEND}/chat/all-chats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      setChats(Array.isArray(res.data.chats) ? res.data.chats : [])
+      setLoading(false)
+      setRefreshing(false)
+    } catch {
+      setLoading(false)
+      setRefreshing(false)
+      setError("Failed to load chats")
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchChats()
+  }, [fetchChats])
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true)
+    fetchChats()
+  }, [fetchChats])
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme === "dark" ? "#0b0b0b" : "#f6f7fb",
+      paddingHorizontal: 15,
+    },
+    chatCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 15,
+      borderBottomWidth: 1,
+      borderColor: theme === "dark" ? "#222" : "#e6e6e6",
+    },
+    avatar: {
+      width: 55,
+      height: 55,
+      borderRadius: 28,
+      marginRight: 15,
+      backgroundColor: theme === "dark" ? "#1f2937" : "#e5e7eb",
+      justifyContent: "center",
+      alignItems: "center",
+      overflow: "hidden",
+    },
+    avatarImg: {
+      width: "100%",
+      height: "100%",
+    },
+    initials: {
+      color: theme === "dark" ? "#fff" : "#111827",
+      fontWeight: "700",
+      fontSize: 18,
+    },
+    name: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: theme === "dark" ? "#fff" : "#111",
+    },
+    message: {
+      fontSize: 15,
+      color: theme === "dark" ? "#aaa" : "#555",
+      marginTop: 3,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 30,
+    },
+    emptyImage: {
+      width: 140,
+      height: 140,
+      marginBottom: 20,
+      opacity: 0.95,
+    },
+    emptyText: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: theme === "dark" ? "#fff" : "#111",
+      marginTop: 8,
+    },
+    emptySub: {
+      fontSize: 15,
+      color: theme === "dark" ? "#aaa" : "#666",
+      marginTop: 8,
+      textAlign: "center",
+    },
+    addButton: {
+      position: "absolute",
+      bottom: 25,
+      right: 25,
+      backgroundColor: theme === "dark" ? "#2563eb" : "#3b82f6",
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 6,
+    },
+    addButtonText: {
+      color: "#fff",
+      fontSize: 34,
+      marginTop: -4,
+    },
+    headerError: {
+      color: "red",
+      textAlign: "center",
+      marginVertical: 8,
+    },
+  })
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color={theme === "dark" ? "#60a5fa" : "#3b82f6"} />
+      </SafeAreaView>
+    )
+  }
+
+  if (chats.length === 0) {
+    return (
+      <SafeAreaView style={styles.emptyContainer}>
+        <Image source={require("../../assets/start-chat.png")} style={styles.emptyImage} />
+        <Text style={styles.emptyText}>Start Messaging</Text>
+        <Text style={styles.emptySub}>Your chats will appear here once you start a conversation.</Text>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push("/new-chat")}
+        >
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    )
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={chats}
+        keyExtractor={(item) => item.chatId}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        renderItem={({ item }) => {
+          const initials = item.friend?.name?.[0]?.toUpperCase() ?? "U"
+
+          return (
+            <TouchableOpacity
+              style={styles.chatCard}
+              onPress={() =>
+                router.push({
+                  pathname: "/chat/[chatId]",
+                  params: { chatId: item.chatId },
+                })
+              }
+            >
+              <View style={styles.avatar}>
+                {item.friend?.image ? (
+                  <Image source={{ uri: item.friend.image }} style={styles.avatarImg} />
+                ) : (
+                  <Text style={styles.initials}>{initials}</Text>
+                )}
+              </View>
+              <View>
+                <Text style={styles.name}>
+                  {item.friend?.name ?? item.friend?.username ?? "Unknown"}
+                </Text>
+                <Text style={styles.message}>{item.lastMessage ?? "Say hi 👋"}</Text>
+              </View>
+            </TouchableOpacity>
+          )
+        }}
+      />
+
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => router.push("/new-chat")}
+      >
+        <Text style={styles.addButtonText}>+</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  )
+}

@@ -12,7 +12,7 @@ export const registerSocketServer = (server: any) => {
     });
 
     io.on("connection", (socket: CustomSocket) => {
-
+        console.log("Client connected:", socket.id);
         socket.on("join-room", (roomId: string) => {
             socket.join(roomId);
         });
