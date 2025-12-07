@@ -197,11 +197,64 @@ const updateImage = async (req: Request, res: Response) => {
     )
 }
 
+const getLastSeen = async (req: Request, res: Response) => {
+    try {
+        const user = await User.findById(req.params.id).select("online lastSeen");
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            online: user.online,
+            lastSeen: user.lastSeen
+        });
+
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching last seen",
+            error: error.message
+        });
+    }
+};
+
+const getOnlineStatus = async (req: Request, res: Response) => {
+    try {
+        const user = await User.findById(req.params.id).select("online");
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            online: user.online
+        });
+
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching online status",
+            error: error.message
+        });
+    }
+};
+
 export {
     loginUser,
     verifyUser,
     updateUser,
     deleteUser,
     tutorial,
-    updateImage
+    updateImage,
+    getLastSeen,
+    getOnlineStatus
 }

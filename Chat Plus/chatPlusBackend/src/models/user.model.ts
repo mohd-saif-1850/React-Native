@@ -11,7 +11,9 @@ export interface UserValidation extends Document{
     name?: string,
     gender?: string,
     about?: string,
-    tutorial?: boolean
+    tutorial?: boolean,
+    online?: Boolean;
+    lastSeen?: Date;
 }
 
 const userSchema : Schema<UserValidation> = new Schema({
@@ -58,6 +60,13 @@ const userSchema : Schema<UserValidation> = new Schema({
     tutorial: {
         type: Boolean,
         default: true
+    },
+    online: {
+        type: Boolean,
+        default: false
+    },
+    lastSeen: {
+        type: Date
     }
 },{ timestamps: true })
 
