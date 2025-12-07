@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendVerifyEmail = async (email: string, otp: string) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: "Chat Plus <support@ahhandicraft.store>",
+      from: "Chat Plus <support@influenco.in>",
       to: email,
       subject: "Your Chat Plus Verification Code",
       html: verifyEmailLayout(email, otp),
