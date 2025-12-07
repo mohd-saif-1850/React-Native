@@ -21,7 +21,9 @@ app.get("/",(req,res) => {
 
 //Routes Here !
 import userRoutes from "./routes/user.route"
+import chatRoutes from "./routes/chat.route"
 
 app.use("/api/v1/user",userRoutes)
+app.use("/api/v1/chat",chatRoutes)
 
 export default app;
