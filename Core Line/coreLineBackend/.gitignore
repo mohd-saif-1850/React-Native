@@ -1,43 +1,32 @@
 # Dependencies
 node_modules/
 
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment variables
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-
-# Build output
-dist/
-build/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Coverage
-coverage/
-
 # OS files
 .DS_Store
 Thumbs.db
 
-# Editor directories and files
+# Editor / IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# Nodemon
-.nodemon.json
+# Coverage
+coverage/
 
-# Optional lock files (keep ONE if you want)
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
+# Cache
+.cache
+.tmp
