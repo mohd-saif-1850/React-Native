@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { Message } from "./models/message.model";
 import { User } from "./models/user.model";
+import { ApiError } from "./helpers/apiError";
 
 interface CustomSocket extends Socket {
     userId?: string;
@@ -26,6 +27,9 @@ export const registerSocketServer = (server: any) => {
                     sender,
                     message
                 });
+                if (!savedMessage) {
+                    return console.log("Saved Messagae Error in WS !")
+                }
 
                 io.to(roomId).emit("receive-message", savedMessage);
 
