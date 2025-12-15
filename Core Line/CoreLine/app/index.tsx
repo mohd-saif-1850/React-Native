@@ -14,11 +14,11 @@ export default function LandingPage() {
     const existedToken = await SecureStore.getItemAsync("token")
     const tutorial = await AsyncStorage.getItem("tutorial")
 
-    if (existedToken && tutorial == "true" || true) {
+    if (existedToken && tutorial) {
       return router.replace("/(tabs)")
     }
-    if (!existedToken) {
-      return router.replace("/profile")
+    if (existedToken && !tutorial) {
+      return router.replace("/changeProfilePic")
     }
   }
 

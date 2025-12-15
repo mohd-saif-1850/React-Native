@@ -11,6 +11,7 @@ import {
 import axios from "axios"
 import { useRouter } from "expo-router"
 import * as SecureStore from "expo-secure-store"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 export default function LoginScreen() {
   const scheme = useColorScheme()
@@ -39,9 +40,13 @@ export default function LoginScreen() {
       )
 
       await SecureStore.setItemAsync("token",res.data.data.token)
+      const tutorial = await AsyncStorage.getItem("tutorial")
 
-      if (res.data?.data?.token) {
-        router.replace("/profile")
+      if (res.data?.data?.token && !tutorial) {
+        router.replace("/changeProfilePic")
+      }
+      if (res.data?.data?.token && tutorial) {
+        router.replace("/(tabs)")
       }
     } catch (err: any) {
       setError(

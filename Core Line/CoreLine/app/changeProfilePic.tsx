@@ -9,6 +9,8 @@ import {
 import { useRouter } from "expo-router"
 import * as ImagePicker from "expo-image-picker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import axios from "axios"
+import * as SecureStore from "expo-secure-store"
 
 export default function ProfileSetupScreen() {
   const scheme = useColorScheme()
@@ -32,14 +34,38 @@ export default function ProfileSetupScreen() {
   }
 
   const handleContinue = async () => {
-    if (!image) return
-    setLoading(true)
-    await AsyncStorage.setItem("tutorial","true")
-    setTimeout(() => {
-      setLoading(false)
-      router.replace("/(tabs)")
-    }, 1200)
+  if (!image) return
+  setLoading(true)
+
+  try {
+    const token = await SecureStore.getItemAsync("token")
+
+    const formData = new FormData()
+    formData.append("file", {
+      uri: image,
+      name: "profile.jpg",
+      type: "image/jpeg",
+    } as any)
+
+    const res = await axios.patch(
+      `${process.env.EXPO_PUBLIC_URL}/user/update-pic`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    )
+    // await AsyncStorage.setItem("tutorial","true")
+    // router.replace("/(tabs)")
+    setLoading(false)
+  } catch (error) {
+    setLoading(false)
+    console.log("Error while Changing the Profile Picture:", error)
   }
+}
+
 
   return (
     <View

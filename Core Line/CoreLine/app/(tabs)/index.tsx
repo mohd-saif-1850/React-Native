@@ -51,17 +51,18 @@ export default function App() {
   }
 
   const logout = async () => {
-    await Promise.all([
-      SecureStore.deleteItemAsync("token"),
-      AsyncStorage.removeItem("tutorial"),
-    ])
-
-    if (socket.connected) {
-      socket.removeAllListeners()
-      socket.disconnect()
+    try {
+     const token = await SecureStore.getItemAsync("token")
+  
+      if (socket.connected) {
+        socket.removeAllListeners()
+        socket.disconnect()
+      }
+  
+      router.replace("/login")
+    } catch (error) {
+      console.log("Error Comes while Logging-Out : ", error)
     }
-
-    router.replace("/")
   }
 
   return (

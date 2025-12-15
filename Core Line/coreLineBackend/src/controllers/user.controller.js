@@ -63,7 +63,7 @@ const loginUser = async (req,res) => {
         throw new apiError(400,"Invalid Password !")
     }
 
-    const token = generateToken({userId : user._id, username})
+    const token = generateToken({userId : user._id})
 
     return res.status(200).json(
         new apiResponse(200,`${username} Logged-In Successfully !`,{token, user})
@@ -103,8 +103,27 @@ const updatePic = async (req,res) => {
     )
 }
 
+const getUser = async (req,res) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Not Found !")
+    }
+
+    const user = await User.findById(userId).select("-password")
+
+    if (!user) {
+        throw new apiError(400,"Server failed to Fetch the User !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"User Fetched Successfully !",user)
+    )
+}
+
 export {
     registerUser,
     loginUser,
-    updatePic
+    updatePic,
+    getUser
 }
