@@ -1,40 +1,33 @@
-import cloudinary from "../helpers/cloudinary.js"
+import { v2 as cloudinary } from "cloudinary"
 import fs from "fs"
+import dotenv from "dotenv"
 
-let isConfigured = false
+dotenv.config()
 
-const configureCloudinary = () => {
-  if (isConfigured) return
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+})
 
-  const {
-    CLOUDINARY_CLOUD_NAME,
-    CLOUDINARY_API_KEY,
-    CLOUDINARY_API_SECRET,
-  } = process.env
+const uploadToCloudinary = async (filePath, folder = "coreline") => {
+  if (!filePath) return null
 
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    throw new Error("Cloudinary env variables are missing")
+  try {
+    const uploaded = await cloudinary.uploader.upload(filePath, {
+      folder,
+      resource_type: "auto",
+    })
+
+    return uploaded
+  } catch (error) {
+    console.error("Cloudinary upload error:", error.message)
+    return null
+  } finally {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
   }
-
-  cloudinary.config({
-    cloud_name: CLOUDINARY_CLOUD_NAME,
-    api_key: CLOUDINARY_API_KEY,
-    api_secret: CLOUDINARY_API_SECRET,
-  })
-
-  isConfigured = true
-}
-
-const uploadToCloudinary = async (localFilePath, folder = "coreline") => {
-  configureCloudinary()
-
-  const result = await cloudinary.uploader.upload(localFilePath, {
-    folder,
-    resource_type: "auto",
-  })
-
-  fs.unlinkSync(localFilePath)
-  return result
 }
 
 export default uploadToCloudinary
