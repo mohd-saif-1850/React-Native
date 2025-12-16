@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import * as ImagePicker from "expo-image-picker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
 import * as SecureStore from "expo-secure-store"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function ProfileSetupScreen() {
   const scheme = useColorScheme()
@@ -19,6 +20,7 @@ export default function ProfileSetupScreen() {
 
   const [image, setImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -28,44 +30,78 @@ export default function ProfileSetupScreen() {
       quality: 1,
     })
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri)
+    if (result.canceled || !result.assets?.length) {
+      return setError("File is Cancelled !")
     }
+
+    const file = result.assets[0]
+
+    if (file.fileSize && file.fileSize > 10 * 1024 * 1024) {
+      return setError("Image must be less than 10Mb !")
+    }
+
+    setError("")
+    setImage(file.uri)
   }
 
   const handleContinue = async () => {
-  if (!image) return
-  setLoading(true)
+    if (!image) return
+    setLoading(true)
 
-  try {
-    const token = await SecureStore.getItemAsync("token")
+    try {
+      const token = await SecureStore.getItemAsync("token")
 
-    const formData = new FormData()
-    formData.append("file", {
-      uri: image,
-      name: "profile.jpg",
-      type: "image/jpeg",
-    } as any)
+      const formData = new FormData()
+      formData.append("file", {
+        uri: image,
+        name: "profile.jpg",
+        type: "image/jpeg",
+      } as any)
 
-    const res = await axios.patch(
-      `${process.env.EXPO_PUBLIC_URL}/user/update-pic`,
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    )
-    // await AsyncStorage.setItem("tutorial","true")
-    // router.replace("/(tabs)")
-    setLoading(false)
-  } catch (error) {
-    setLoading(false)
-    console.log("Error while Changing the Profile Picture:", error)
+      await axios.patch(
+        `${process.env.EXPO_PUBLIC_URL}/user/update-pic`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      )
+
+      await AsyncStorage.setItem("tutorial", "true")
+      router.replace("/(tabs)")
+    } catch (err) {
+      setError("Failed to update profile picture")
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
+  const getUser = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("token")
+
+      const user = await axios.get(
+        `${process.env.EXPO_PUBLIC_URL}/user/get-user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      const imageUrl = user.data?.data?.profilePic
+      if (imageUrl) {
+        setImage(imageUrl)
+      }
+    } catch {
+      setError("Failed to load user")
+    }
+  }
+
+  useEffect(() => {
+    getUser()
+  }, [])
 
   return (
     <View
@@ -101,6 +137,7 @@ export default function ProfileSetupScreen() {
 
       <TouchableOpacity
         onPress={pickImage}
+        activeOpacity={0.9}
         style={{
           width: 180,
           height: 180,
@@ -110,9 +147,9 @@ export default function ProfileSetupScreen() {
           justifyContent: "center",
           marginBottom: 40,
           shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 10,
-          elevation: 6,
+          shadowOpacity: 0.18,
+          shadowRadius: 12,
+          elevation: 8,
         }}
       >
         {image ? (
@@ -125,16 +162,29 @@ export default function ProfileSetupScreen() {
             }}
           />
         ) : (
-          <Text
-            style={{
-              color: "#3b82f6",
-              fontSize: 16,
-              fontWeight: "600",
-            }}
-          >
-            Choose Photo
-          </Text>
+          <Ionicons
+            name="person-circle-outline"
+            size={140}
+            color="#9ca3af"
+          />
         )}
+
+        <View
+          style={{
+            position: "absolute",
+            bottom: 8,
+            right: 8,
+            width: 42,
+            height: 42,
+            borderRadius: 21,
+            backgroundColor: "#3b82f6",
+            alignItems: "center",
+            justifyContent: "center",
+            elevation: 6,
+          }}
+        >
+          <Ionicons name="camera" size={20} color="#fff" />
+        </View>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -158,6 +208,19 @@ export default function ProfileSetupScreen() {
           {loading ? "Saving..." : "Continue"}
         </Text>
       </TouchableOpacity>
+
+      {error ? (
+        <Text
+          style={{
+            color: "#ef4444",
+            fontSize: 14,
+            marginTop: 10,
+            textAlign: "center",
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
   )
 }
