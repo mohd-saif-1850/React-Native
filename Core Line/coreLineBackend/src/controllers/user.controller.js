@@ -145,25 +145,22 @@ const updateUser = async (req,res) =>{
     if (!user) {
         throw new apiError(400,"User Not Found !")
     }
-
-    if (name) {
-        user.name = name;
-    }
-    if (bio) {
-        user.bio = bio
-    }
-    if (gender) {
-        user.gender = gender
-    }
     if (username) {
-        const existedUser = await User.findOne({username})
+        const existedUser = await User.findOne({
+            username,
+            _id: { $ne: userId },
+        })
 
         if (existedUser) {
-            throw new apiError(`User Already Exists with ${username} Username !`)
+            throw new apiError(409, "Username already exists")
         }
 
         user.username = username
     }
+
+    user.name = name ? name : user.name
+    user.gender = gender ? gender : user.gender
+    user.bio = bio ? bio : user.bio
 
     await user.save()
 
