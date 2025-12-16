@@ -12,6 +12,10 @@ const userSchema = new Schema({
         unique: true,
         required: true
     },
+    gender: {
+        type: String,
+        default: "Not Specified"
+    },
     password: {
         type: String,
         required: true,
@@ -20,6 +24,9 @@ const userSchema = new Schema({
     profilePic: {
         type: String,
         default: "https://res.cloudinary.com/dlzi244at/image/upload/v1763367677/defaultPersonImage_exseqc.avif"
+    },
+    publicProfilePicId : {
+        type: String
     },
     bio: {
         type: String

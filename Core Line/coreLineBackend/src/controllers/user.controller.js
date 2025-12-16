@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import apiResponse from "../utils/apiResponse.js"
 import { generateToken } from "../helpers/jwt.js"
 import uploadToCloudinary from "../utils/uploadToCloudinary.js"
+import cloudinary from "../helpers/cloudinary.js"
 
 const registerUser = async (req, res) => {
     const {name, username, password} = req.body
@@ -87,14 +88,20 @@ const updatePic = async (req,res) => {
     if (!upload) {
         throw new apiError(500,"Server Failed to Update Profile Picture !")
     }
-
-    const user = await User.findByIdAndUpdate(userId,{
-        profilePic: upload.secure_url
-    },{ new: true})
+    
+    const user = await User.findById(userId)
 
     if (!user) {
         throw new apiError(500,"Server Failed to Fetch the User !")
     }
+
+    if (user.publicProfilePicId) {
+        const deletePic = await cloudinary.uploader.destroy(user.publicProfilePicId)
+    }
+
+    user.profilePic = upload.secure_url
+    user.publicProfilePicId = upload.public_id
+    await user.save()
 
     return res.status(200).json(
         new apiResponse(200, "Profile picture updated", {
@@ -121,9 +128,54 @@ const getUser = async (req,res) => {
     )
 }
 
+const updateUser = async (req,res) =>{
+    const {name, username, bio, gender} = req.body
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id is Required !")
+    }
+
+    if (!(name || username || bio || gender)) {
+        throw new apiError(400,"Nothing Changed !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(400,"User Not Found !")
+    }
+
+    if (name) {
+        user.name = name;
+    }
+    if (bio) {
+        user.bio = bio
+    }
+    if (gender) {
+        user.gender = gender
+    }
+    if (username) {
+        const existedUser = await User.findOne({username})
+
+        if (existedUser) {
+            throw new apiError(`User Already Exists with ${username} Username !`)
+        }
+
+        user.username = username
+    }
+
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"User Updated Successfully !",user)
+    )
+}
+
 export {
     registerUser,
     loginUser,
     updatePic,
-    getUser
+    getUser,
+    updateUser
 }
