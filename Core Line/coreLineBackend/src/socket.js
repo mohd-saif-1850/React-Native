@@ -12,8 +12,8 @@ const io = new Server(server,{
 io.on("connection", (socket) => {
     console.log("User connected with Id : ", socket.id)
 
-    socket.on("sendMessage", ({userId, msg}) => {
-        io.emit("receiveMessage",{userId, msg})
+    socket.on("sendMessage", ({userId, image, username, msg}) => {
+        io.emit("receiveMessage",{userId, image, username, msg})
     })
 
     
