@@ -169,10 +169,25 @@ const updateUser = async (req,res) =>{
     )
 }
 
+const searchUsers = async (req, res) => {
+  const { username } = req.query
+  const userId = req.userId
+
+  if (!username) return res.json([])
+
+  const users = await User.find({
+    username: { $regex: username, $options: "i" },
+    _id: { $ne: userId }
+  }).select("_id username profilePic")
+
+  res.status(200).json(users)
+}
+
 export {
     registerUser,
     loginUser,
     updatePic,
     getUser,
-    updateUser
+    updateUser,
+    searchUsers
 }

@@ -26,6 +26,10 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<any[]>([])
   const [me, setMe] = useState<any>(null)
   const [open, setOpen] = useState(false)
+  const [typingUser, setTypingUser] = useState<string | null>(null)
+
+  const typingTimeout = useRef<any>(null)
+
 
   const getMe = async () => {
     const token = await SecureStore.getItemAsync("token")
@@ -43,7 +47,15 @@ export default function ChatScreen() {
     getMe()
     socket.connect()
 
-    socket.on("receiveMessage", (data) => {
+    socket.on("typing-global", ({ username }) => {
+      setTypingUser(username)
+    })
+
+    socket.on("stop-typing-global", () => {
+      setTypingUser(null)
+    })
+
+    socket.on("receive-global-message", (data) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -57,10 +69,23 @@ export default function ChatScreen() {
     })
 
     return () => {
-      socket.off("receiveMessage")
+      socket.off("typing-global")
+      socket.off("stop-typing-global")
+
+      socket.off("receive-global-message")
       socket.disconnect()
     }
   }, [])
+
+  useEffect(() => {
+    if (!me) return
+
+    socket.emit("join-global", {
+      userId: me._id,
+      username: me.username,
+      image: me.profilePic,
+    })
+  }, [me])
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -71,11 +96,14 @@ export default function ChatScreen() {
   const sendMessage = () => {
     if (!msg.trim() || !me) return
 
-    socket.emit("sendMessage", {
+    socket.emit("send-global-message", {
       userId: me._id,
       image: me.profilePic,
       username: me.username,
       msg,
+    })
+    socket.emit("stop-typing-global", {
+      username: me?.username,
     })
 
     setMsg("")
@@ -241,6 +269,20 @@ export default function ChatScreen() {
           }}
         />
 
+        {typingUser && typingUser !== me?.username && (
+          <Text
+            style={{
+              marginLeft: 16,
+              marginBottom: 6,
+              fontSize: 12,
+              color: isDark ? "#9ca3af" : "#6b7280",
+              fontStyle: "italic",
+            }}
+          >
+            {typingUser} is Typing...
+          </Text>
+        )}
+
         <View
           style={{
             flexDirection: "row",
@@ -254,7 +296,24 @@ export default function ChatScreen() {
         >
           <TextInput
             value={msg}
-            onChangeText={setMsg}
+            onChangeText={(text) => {
+              setMsg(text)
+
+              socket.emit("typing-global", {
+                username: me?.username,
+              })
+
+              if (typingTimeout.current) {
+                clearTimeout(typingTimeout.current)
+              }
+
+              typingTimeout.current = setTimeout(() => {
+                socket.emit("stop-typing-global", {
+                  username: me?.username,
+                })
+              }, 800)
+            }}
+
             placeholder="Message"
             placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
             style={{
