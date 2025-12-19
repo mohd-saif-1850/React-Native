@@ -12,6 +12,8 @@ import {
 import axios from "axios"
 import * as SecureStore from "expo-secure-store"
 import { router } from "expo-router"
+import { SafeAreaView } from "react-native-safe-area-context"
+import useDebounce from "@/src/debouncing"
 
 export default function SearchUserScreen() {
   const isDark = useColorScheme() === "dark"
@@ -19,10 +21,9 @@ export default function SearchUserScreen() {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const debouncing = useDebounce(query,500)
 
   const searchUsers = async (text: string) => {
-    setQuery(text)
-
     if (!text.trim()) {
       setResults([])
       return
@@ -48,6 +49,14 @@ export default function SearchUserScreen() {
     }
   }
 
+  useEffect(() => {
+    if (debouncing.trim()) {
+      searchUsers(debouncing)
+    } else {
+      setResults([])
+    }
+  },[debouncing])
+
   const startChat = async (receiverUsername: string) => {
     const token = await SecureStore.getItemAsync("token")
 
@@ -68,6 +77,7 @@ export default function SearchUserScreen() {
   }
 
   return (
+    
     <View
       style={{
         flex: 1,
@@ -75,6 +85,7 @@ export default function SearchUserScreen() {
         paddingTop: 20,
       }}
     >
+      <SafeAreaView>
       <Text
         style={{
           fontSize: 20,
@@ -89,7 +100,7 @@ export default function SearchUserScreen() {
 
       <TextInput
         value={query}
-        onChangeText={searchUsers}
+        onChangeText={setQuery}
         placeholder="Search by username"
         placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
         style={{
@@ -161,6 +172,7 @@ export default function SearchUserScreen() {
           </TouchableOpacity>
         )}
       />
+      </SafeAreaView>
     </View>
   )
 }
