@@ -183,11 +183,24 @@ const searchUsers = async (req, res) => {
   res.status(200).json(users)
 }
 
+const getAllUsers = async (req, res) => {
+  const userId = req.userId
+
+  const users = await User.find({
+    _id: { $ne: userId }
+  }).select("_id username profilePic")
+
+  return res.status(200).json(
+    new apiResponse(200, "All users fetched", users)
+  )
+}
+
 export {
     registerUser,
     loginUser,
     updatePic,
     getUser,
     updateUser,
-    searchUsers
+    searchUsers,
+    getAllUsers
 }

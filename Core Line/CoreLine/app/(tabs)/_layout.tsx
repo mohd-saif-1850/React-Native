@@ -38,6 +38,18 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons size={28} name="person" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="searchUser"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="chat/[chatId]"
+        options={{
+          href: null
+        }}
+      />
     </Tabs>
   );
 }
