@@ -173,9 +173,54 @@ const updateImage = async (req: Request, res: Response) => {
     }
 }
 
+const deleteUser = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+
+    try {
+        const user = await User.findByIdAndDelete(userId)
+        
+        if (!user) {
+            throw new apiError(500,"Server Failed to Delete a User !")
+        }
+    
+        return res.status(200).json(
+            new apiResponse(200,"User deleted successfully !",user)
+        )
+    } catch (error) {
+        console.log("Error in Deleting Route : ",error)
+        return res.status(401).json(
+            new apiResponse(401,"Some problem occured in the Delete User !",error)
+        )
+    }
+}
+
+const getUser = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(500,"Server Failed to Fetch a User !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"User fetched successfully !",user)
+    )
+}
+
 export {
     redirectToGithub,
     githubCallback,
     updateUser,
-    updateImage
+    updateImage,
+    deleteUser,
+    getUser
 }
