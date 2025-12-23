@@ -4,13 +4,15 @@ import { User } from "../models/user.model";
 import { generateToken } from "../utils/jwt";
 import { Request, Response } from "express";
 import axios from "axios"
+import uploadToCloudinary from "../utils/uploadToCloudinary";
+import cloudinary from "../utils/cloudinary";
 
-const redirectToGithub = async (req: Request, res: Response) => {
-    const githubAuthUrl =
-    `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user:email`;
+const redirectToGithub = (req: Request, res: Response) => {
+  const githubAuthUrl = 
+    `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=http://localhost:3000/api/v1/user/github-callback&scope=user:email`;
 
-    res.redirect(githubAuthUrl)
-}
+  res.redirect(githubAuthUrl);
+};
 
 const githubCallback = async (req: Request, res: Response) => {
     const { code } = req.query
@@ -122,9 +124,58 @@ const updateUser = async (req: Request, res: Response) => {
     )
 }
 
+const updateImage = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const file = req.file
 
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+    if (!file) {
+        throw new apiError(404,"File not provided !")
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+        throw new apiError(400,"File must be less than 10MB !")
+    }
+
+    try {
+        const filePath = req.file?.path
+    
+        const image = await uploadToCloudinary(filePath)
+    
+        if (!image) {
+            throw new apiError(404,"File not found !")
+        }
+
+        const user = await User.findById(userId)
+
+        if (!user) {
+            throw new apiError(401,"User not Found !")
+        }
+
+        if (user.profilePicId) {
+            const deletePic = await cloudinary.uploader.destroy(user.profilePicId)
+        }
+
+        user.profilePic = image.secure_url
+        user.profilePicId = image.public_id
+        await user.save()
+
+        return res.status(200).json(
+            new apiResponse(200,"File Uploaded Successfully !",user)
+        )
+    } catch (error) {
+        console.log("Error While Uploading the File : ",error)
+        return res.status(400).json(
+            new apiResponse(401,"Some error while uploading the file in cloudinary !",error)
+        )
+    }
+}
 
 export {
     redirectToGithub,
-    githubCallback
+    githubCallback,
+    updateUser,
+    updateImage
 }

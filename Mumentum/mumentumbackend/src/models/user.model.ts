@@ -9,6 +9,7 @@ export interface IUser extends Document{
     profilePic: string;
     subscription: boolean;
     githubId: string;
+    profilePicId?: string;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -46,6 +47,9 @@ const userSchema : Schema<IUser> = new Schema({
     },
     dob: {
         type: Date
+    },
+    profilePicId: {
+        type: String
     }
 },{ timestamps: true })
 
