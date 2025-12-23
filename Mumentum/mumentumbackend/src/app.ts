@@ -1,5 +1,6 @@
 import express from "express"
 import cors from "cors"
+import { generalRateLimit } from "./utils/rateLimit"
 
 const app = express()
 
@@ -13,6 +14,8 @@ app.get("/",(req,res) => {
   res.send(`Mumentum Backend is Running !`)
 })
 
+// Rate Limiting
+app.use(generalRateLimit)
 // Routes Configuration
 import userRoutes from "./routes/user.route"
 
