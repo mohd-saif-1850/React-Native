@@ -1,10 +1,14 @@
 import express from "express"
 import cors from "cors"
 import { generalRateLimit } from "./utils/rateLimit"
+import helmet from "helmet"
+import mongoSanitize from "express-mongo-sanitize"
 
 const app = express()
 
 app.use(express.json())
+app.use(helmet())
+app.use(mongoSanitize())
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || "*"
