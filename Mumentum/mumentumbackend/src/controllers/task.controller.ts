@@ -63,6 +63,9 @@ const completeTask = async (req: Request, res: Response) => {
         if (!task) {
             throw new apiError(401,"Task not found !")
         }
+        if (task.completion) {
+            throw new apiError(400,"Task already completed !")
+        }
     
         return res.status(200).json(
             new apiResponse(200,"Task completed successfully !",task)
@@ -86,11 +89,17 @@ const deleteTask = async (req: Request, res: Response) => {
         throw new apiError(404,"Please provide the Task Id !")
     }
 
-    const task = await Task.findByIdAndDelete(taskId)
-
-    return res.status(200).json(
-        new apiResponse(200,"Task deleted successfully !",task)
-    )
+    try {
+        const task = await Task.findByIdAndDelete(taskId)
+    
+        return res.status(200).json(
+            new apiResponse(200,"Task deleted successfully !",task)
+        )
+    } catch (error) {
+        return res.status(401).json(
+            new apiResponse(401,"Error occured while deleting the task !",error)
+        )
+    }
 }
 
 const getTask = async (req: Request, res: Response) => {
@@ -104,11 +113,17 @@ const getTask = async (req: Request, res: Response) => {
         throw new apiError(404,"Please provide the Task Id !")
     }
 
-    const task = await Task.findById(taskId)
-
-    return res.status(200).json(
-        new apiResponse(200,"Task fetched successfully !",task)
-    )
+    try {
+        const task = await Task.findById(taskId)
+    
+        return res.status(200).json(
+            new apiResponse(200,"Task fetched successfully !",task)
+        )
+    } catch (error) {
+        return res.status(401).json(
+            new apiResponse(401,"Error while getting a task !",error)
+        )
+    }
 }
 
 const getAllTask = async (req: Request, res: Response) => {
@@ -118,13 +133,19 @@ const getAllTask = async (req: Request, res: Response) => {
         throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
     }
 
-    const task = await Task.find({
-        userId
-    })
-
-    return res.status(200).json(
-        new apiResponse(200,"All tasks fetched successfully !",task)
-    )
+    try {
+        const task = await Task.find({
+            userId
+        })
+    
+        return res.status(200).json(
+            new apiResponse(200,"All tasks fetched successfully !",task)
+        )
+    } catch (error) {
+        return res.status(401).json(
+            new apiResponse(401,"Error while getting all the tasks !",error)
+        )
+    }
 }
 
 export {
