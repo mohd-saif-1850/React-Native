@@ -36,6 +36,101 @@ const createTask = async (req: Request, res: Response) => {
     }
 }
 
+const completeTask = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { taskId } = req.body
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+    if (!taskId) {
+        throw new apiError(404,"Please provide the Task Id !")
+    }
+
+    try {
+        const task = await Task.findByIdAndUpdate(taskId,{
+            $set: {
+                completion: true
+            }
+        },{ new: true })
+    
+        const user = await User.findByIdAndUpdate(userId,{
+            $inc: {
+                points: 5
+            }
+        })
+
+        if (!task) {
+            throw new apiError(401,"Task not found !")
+        }
+    
+        return res.status(200).json(
+            new apiResponse(200,"Task completed successfully !",task)
+        )
+    } catch (error) {
+        console.log("Some error in the completing the Task : ",error)
+        return res.status(401).json(
+            new apiResponse(401,"Error occured in completing the task !",error)
+        )
+    }
+}
+
+const deleteTask = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { taskId } = req.body
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+    if (!taskId) {
+        throw new apiError(404,"Please provide the Task Id !")
+    }
+
+    const task = await Task.findByIdAndDelete(taskId)
+
+    return res.status(200).json(
+        new apiResponse(200,"Task deleted successfully !",task)
+    )
+}
+
+const getTask = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { taskId } = req.body
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+    if (!taskId) {
+        throw new apiError(404,"Please provide the Task Id !")
+    }
+
+    const task = await Task.findById(taskId)
+
+    return res.status(200).json(
+        new apiResponse(200,"Task fetched successfully !",task)
+    )
+}
+
+const getAllTask = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+
+    const task = await Task.find({
+        userId
+    })
+
+    return res.status(200).json(
+        new apiResponse(200,"All tasks fetched successfully !",task)
+    )
+}
+
 export {
-    createTask
+    createTask,
+    completeTask,
+    deleteTask,
+    getTask,
+    getAllTask
 }

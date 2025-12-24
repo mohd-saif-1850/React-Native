@@ -5,7 +5,6 @@ export interface ITask extends Document{
     task: string;
     isActive: Boolean;
     completion: boolean;
-    daysTake?: number;
 }
 
 const taskSchema : Schema<ITask> = new Schema({
@@ -26,10 +25,6 @@ const taskSchema : Schema<ITask> = new Schema({
     completion: {
         type: Boolean,
         default: false
-    },
-    daysTake: {
-        type: Number,
-        default: 1
     }
 }, { timestamps: true })
 
