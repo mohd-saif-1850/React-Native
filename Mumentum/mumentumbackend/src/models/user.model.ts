@@ -10,6 +10,8 @@ export interface IUser extends Document{
     subscription: boolean;
     githubId: string;
     profilePicId?: string;
+    streak?: number;
+    points?: number;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -50,6 +52,14 @@ const userSchema : Schema<IUser> = new Schema({
     },
     profilePicId: {
         type: String
+    },
+    streak: {
+        type: Number,
+        default: 0
+    },
+    points: {
+        type: Number,
+        default: 0
     }
 },{ timestamps: true })
 
