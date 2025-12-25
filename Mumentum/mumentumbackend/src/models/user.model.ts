@@ -12,6 +12,8 @@ export interface IUser extends Document{
     profilePicId?: string;
     streak?: number;
     points?: number;
+    challengePoints?: number;
+    challengeStreak?: number;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -58,6 +60,14 @@ const userSchema : Schema<IUser> = new Schema({
         default: 0
     },
     points: {
+        type: Number,
+        default: 0
+    },
+    challengePoints: {
+        type: Number,
+        default: 2000
+    },
+    challengeStreak: {
         type: Number,
         default: 0
     }
