@@ -1,8 +1,10 @@
 import mongoose, { Schema, Document, Types} from "mongoose";
 
 export interface IChallenge extends Document{
+    title: string;
     owner: Types.ObjectId;
     category: string;
+    points: number;
     entryPoints: number;
     challenge: string;
     start?: Date;
@@ -10,7 +12,7 @@ export interface IChallenge extends Document{
     totalPoints?: number;
     participants?: Types.ObjectId[];
     totalParticipants?: number;
-    challengeStatus?: "upcoming" | "active" | "completed" | "expired";
+    challengeStatus?: "upcoming" | "active" | "completed" | "expired" | "filled";
     difficulty?: "easy" | "medium" | "hard";
     completedBy?: Types.ObjectId[];
     isPrivate?: boolean;
@@ -19,6 +21,11 @@ export interface IChallenge extends Document{
 }
 
 const challengeSchema : Schema<IChallenge> = new Schema({
+    title: {
+        type: String,
+        required: true,
+        trim: true
+    },
     owner: {
         type: Types.ObjectId,
         ref: "User",
@@ -55,11 +62,11 @@ const challengeSchema : Schema<IChallenge> = new Schema({
     }],
     totalParticipants: {
         type: Number,
-        default: 0
+        default: 20
     },
     challengeStatus: {
         type: String,
-        enum: ["upcoming","active","completed","expired"],
+        enum: ["upcoming","active","completed","expired","filled"],
         default: "active"
     },
     difficulty: {
@@ -81,6 +88,10 @@ const challengeSchema : Schema<IChallenge> = new Schema({
     },
     description: {
         type: String
+    },
+    points: {
+        type: Number,
+        default: 200
     }
 },{ timestamps: true })
 

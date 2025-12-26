@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, getUser, githubCallback, redirectToGithub, updateImage, updateUser } from "../controllers/user.controller";
+import { acceptChallenge, deleteUser, getUser, githubCallback, redirectToGithub, updateImage, updateUser } from "../controllers/user.controller";
 import upload from "../middlewares/multer.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -12,5 +12,6 @@ router.route("/update-details").patch(authMiddleware,updateUser)
 router.route("/update-image").patch(authMiddleware,upload.single("file"),updateImage)
 router.route("/delete-user").delete(authMiddleware,deleteUser)
 router.route("/get-user").get(authMiddleware,getUser)
+router.route("/challenge").patch(authMiddleware,acceptChallenge)
 
 export default router;

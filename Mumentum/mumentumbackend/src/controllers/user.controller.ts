@@ -198,6 +198,26 @@ const deleteUser = async (req: Request, res: Response) => {
     }
 }
 
+const acceptChallenge = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+    }
+
+    const user = await User.findByIdAndUpdate(userId,{
+        challenge: true
+    },{ new: true })
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"User challenges begin now !")
+    )
+}
+
 const getUser = async (req: Request, res: Response) => {
     const userId = req.userId
 
@@ -222,5 +242,6 @@ export {
     updateUser,
     updateImage,
     deleteUser,
-    getUser
+    getUser,
+    acceptChallenge
 }
