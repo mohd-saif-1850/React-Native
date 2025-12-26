@@ -1,9 +1,14 @@
 import { View, Text, StyleSheet, Pressable, Linking, useColorScheme } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import axios from "axios"
 
 export default function Index() {
   const scheme = useColorScheme();
   const dark = scheme === "dark";
+
+  const githubLogin = async () => {
+    const res = await axios.get(`${process.env.EXPO_PUBLIC_URL}/user/github-login`)
+  }
 
   const colors = {
     background: dark ? "#0b0f1a" : "#f5f7fb",
@@ -27,7 +32,7 @@ export default function Index() {
 
         <Pressable
           style={[styles.githubButton, { backgroundColor: colors.github }]}
-          onPress={() => Linking.openURL("https://github.com/login")}
+          onPress={githubLogin}
         >
           <FontAwesome name="github" size={22} color="#ffffff" />
           <Text style={styles.githubText}>Continue with GitHub</Text>
