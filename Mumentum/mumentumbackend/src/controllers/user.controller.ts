@@ -236,6 +236,25 @@ const getUser = async (req: Request, res: Response) => {
     )
 }
 
+const loginWithEmail = async (req: Request, res: Response) => {
+    const { username, email} = req.body
+
+    const result = await axios.post(`${process.env.MUMENTUM_OTP}/verification`,{
+        username,
+        email
+    })
+
+    if (!result) {
+        throw new apiError(401,"Email is not send !")
+    }
+
+    console.log("Email Otp : ",result.data.data)
+
+    return res.status(200).json(
+        new apiResponse(200,"Email send successfully !",result.data.data)
+    )
+}
+
 export {
     redirectToGithub,
     githubCallback,
@@ -243,5 +262,6 @@ export {
     updateImage,
     deleteUser,
     getUser,
-    acceptChallenge
+    acceptChallenge,
+    loginWithEmail
 }
