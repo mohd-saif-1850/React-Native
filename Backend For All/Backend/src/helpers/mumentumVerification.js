@@ -12,13 +12,13 @@ export const sendVerificationEmail = async (
     await resend.emails.send({
       from: `Mumentum <onboarding@resend.dev>`,
       to: email,
-      subject: "Mumentum | Resend Email Verification OTP",
+      subject: "Mumentum | Email Verification OTP",
       html: verificationEmailTemplate(username, email, otp),
     });
 
-    console.log("Resend verification email sent successfully");
+    console.log("Verification email sent successfully");
   } catch (error) {
-    console.error("Error sending resend verification email:", error);
+    console.error("Error sending verification email:", error);
     throw error;
   }
 };
