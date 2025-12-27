@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import { verificationEmailTemplate } from "../emails/mumentumVerificationEmail.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendVerificationEmail = async (
   username,
@@ -9,6 +8,8 @@ export const sendVerificationEmail = async (
   otp
 ) => {
   try {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
     await resend.emails.send({
       from: `Mumentum <onboarding@resend.dev>`,
       to: email,

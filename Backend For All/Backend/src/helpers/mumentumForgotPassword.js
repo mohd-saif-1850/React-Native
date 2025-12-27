@@ -1,14 +1,14 @@
 import { Resend } from "resend";
 import { forgotPasswordEmailTemplate } from "../emails/mumentumForgotEmail.js"
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export const sendForgotPassword = async (
   username,
   email,
   otp
 ) => {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
     await resend.emails.send({
       from: `Mumentum <onboarding@resend.dev>`,
       to: email,
