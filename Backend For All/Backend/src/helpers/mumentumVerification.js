@@ -1,5 +1,7 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { verificationEmailTemplate } from "../emails/mumentumVerificationEmail.js";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendVerificationEmail = async (
   username,
@@ -7,24 +9,16 @@ export const sendVerificationEmail = async (
   otp
 ) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    await transporter.sendMail({
-      from: `"Mumentum" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: `Mumentum <onboarding@resend.dev>`,
       to: email,
-      subject: "Mumentum | Email Verification OTP",
-      html: verificationEmailTemplate(username, email, otp)
+      subject: "Mumentum | Resend Email Verification OTP",
+      html: verificationEmailTemplate(username, email, otp),
     });
 
-    console.log("Verification email sent successfully");
+    console.log("Resend verification email sent successfully");
   } catch (error) {
-    console.error("Error sending verification email:", error);
+    console.error("Error sending resend verification email:", error);
     throw error;
   }
 };
