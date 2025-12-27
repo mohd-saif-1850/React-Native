@@ -4,6 +4,10 @@ export interface IUser extends Document{
     name?: string;
     username: string;
     email?: string;
+    password?: string;
+    verified?: boolean;
+    otp?: number;
+    otpExp?: Date;
     gender?: string;
     dob?: Date;
     profilePic: string;

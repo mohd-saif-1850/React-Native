@@ -6,6 +6,7 @@ import { Request, Response } from "express";
 import axios from "axios"
 import uploadToCloudinary from "../utils/uploadToCloudinary";
 import cloudinary from "../utils/cloudinary";
+import bcrypt from "bcryptjs"
 
 const redirectToGithub = (req: Request, res: Response) => {
   const githubAuthUrl = 
@@ -60,7 +61,8 @@ const githubCallback = async (req: Request, res: Response) => {
                 name: githubUser.name || githubUser.login || "Unknown",
                 username: githubUser.login,
                 profilePic: githubUser.avatar_url,
-                githubId: githubUser.id
+                githubId: githubUser.id,
+                verified: true
             })
          }
 
@@ -237,23 +239,215 @@ const getUser = async (req: Request, res: Response) => {
 }
 
 const loginWithEmail = async (req: Request, res: Response) => {
-    const { username, email} = req.body
+    const {name, username, email, password} = req.body
+
+    if (!name) {
+        throw new apiError(404,"Name is Required !")
+    }
+    if (!username) {
+        throw new apiError(404,"Username is Required !")
+    }
+    if (!email) {
+        throw new apiError(404,"Email is Required !")
+    }
+    if (!password) {
+        throw new apiError(404,"Password is Required !")
+    }
+
+    const existedUser = await User.findOne({
+        $or: [
+            {username},
+            {email}
+        ]
+    })
+
+    if (existedUser && existedUser.verified) {
+        throw new apiError(401,`User already exists either from username ${username} or from email ${email} !`)
+    }
+    if (existedUser && !existedUser.verified) {
+        throw new apiError(401,`User already exists either from username ${username} or from email ${email} please verify your account !`)
+    }
 
     const result = await axios.post(`${process.env.MUMENTUM_OTP}/verification`,{
         username,
         email
     })
 
-    if (!result) {
-        throw new apiError(401,"Email is not send !")
+    if (result && !result.data.status) {
+        throw new apiError(403,"Some problem occured while sending the Otp !")
     }
 
-    console.log("Email Otp : ",result.data.data)
+    const hashedPassword = await bcrypt.hash(password,10)
+    const otp = result.data?.data
+    const otpExp = new Date(Date.now() + 10 * 60 * 1000)
+
+    const user = await User.create({
+        name,
+        username,
+        email,
+        password: hashedPassword,
+        otp,
+        otpExp,
+        verified: false
+    })
+
+    if (!user) {
+        throw new apiError(500,"Server failed to create the user !")
+    }
 
     return res.status(200).json(
-        new apiResponse(200,"Email send successfully !",result.data.data)
+        new apiResponse(200,`User created successfully with username ${username} !`,{
+            username, email
+        })
     )
 }
+
+const verifyEmail = async (req: Request, res: Response) => {
+    const {username, email, otp} = req.body
+
+    if (!username) {
+        throw new apiError(404,"Username is required !")
+    }
+    if (!email) {
+        throw new apiError(404,"Email is required !")
+    }
+    if (!otp) {
+        throw new apiError(404,"Otp is required !")
+    }
+
+    const user = await User.findOne({
+        $or: [
+            {username},
+            {email}
+        ]
+    })
+
+    if (!user) {
+        throw new apiError(401,`User not exist neither from username ${username} nor from email ${email} !`)
+    }
+    if (user.verified) {
+        throw new apiError(404,"User is already verified !")
+    }
+    if (!user.otp || !user.otpExp) {
+        throw new apiError(400, "OTP not found or already used")
+    }
+    if (user.otpExp && user.otpExp < new Date()) {
+        throw new apiError(404,"Otp is expired - Please request for a new one !")
+    }
+    if (otp != user.otp) {
+        throw new apiError(404,"Incorrect otp !")
+    }
+
+    user.otp = undefined,
+    user.otpExp = undefined,
+    user.verified = true
+    await user.save()
+
+    const token = await generateToken(user._id)
+
+    return res.status(200).json(
+        new apiResponse(200,`${username} verified successfully !`, token)
+    )
+}
+
+const resendEmailOtp = async (req: Request, res: Response) => {
+    const {username, email} = req.body
+
+    if (!username) {
+        throw new apiError(404,"Username is required !")
+    }
+    if (!email) {
+        throw new apiError(404,"Email is required !")
+    }
+
+    const user = await User.findOne({
+        $or: [
+            {username},
+            {email}
+        ]
+    })
+
+    if (!user) {
+        throw new apiError(401,`User not exist neither from username ${username} nor from email ${email} !`)
+    }
+    if (user.verified) {
+        throw new apiError(404,"User already verified !")
+    }
+    if (user.otpExp && user.otpExp > new Date(Date.now() - 2 * 60 * 1000)) {
+        throw new apiError(429, "Please wait before requesting another OTP")
+    }
+
+    const newOtp = await axios.post(`${process.env.MUMENTUM_OTP}/verification`,{
+        username,
+        email
+    })
+
+    if (!newOtp.data?.data) {
+        throw new apiError(404,"Error occured while sending the new otp !")
+    }
+
+    const newOtpExp = new Date(Date.now() + 10 * 60 * 1000)
+
+    user.otp = newOtp.data.data
+    user.otpExp = newOtpExp
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Otp send successfully !")
+    )
+}
+
+const forgotPassword = async (req: Request, res: Response) => {
+    const {username, email} = req.body
+
+    if (!username) {
+        throw new apiError(404,"Username is required !")
+    }
+    if (!email) {
+        throw new apiError(404,"Email is required !")
+    }
+
+    const user = await User.findOne({
+        $or: [
+            {username},
+            {email}
+        ]
+    })
+
+    if (!user) {
+        throw new apiError(401,`User not exist neither from username ${username} nor from email ${email} !`)
+    }
+    if (!user.verified) {
+        throw new apiError(404,"User not verified !")
+    }
+
+    const result = await axios.post(`${process.env.MUMENTUM_OTP}/forgot-password`,{
+        username,
+        email
+    })
+
+    if (!result.data.data) {
+        throw new apiError(409,"Error occured while sending the email !")
+    }
+
+    const exp = new Date(Date.now() + 10 * 60 * 1000)
+
+    user.otp = result.data.data
+    user.otpExp = exp
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Email sent successfully !",{
+            username,
+            email
+        })
+    )
+}
+
+// 3 routes are left 
+// 1. Check forgot email otp
+// 2. Reset Password
+// 3. Login using email or username
 
 export {
     redirectToGithub,
@@ -263,5 +457,8 @@ export {
     deleteUser,
     getUser,
     acceptChallenge,
-    loginWithEmail
+    loginWithEmail,
+    verifyEmail,
+    resendEmailOtp,
+    forgotPassword
 }

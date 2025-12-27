@@ -44,6 +44,10 @@ const createChallenge = async (req: Request, res: Response) => {
     if (user && !user.challenge) {
         throw new apiError(404,"First start the challenge !")
     }
+    if (user && !user.subscription) {
+        throw new apiError(401,"Subscription required to create a Challenge !")
+    }
+
     const owner = user.username
     let entryPoints;
     if (!points && !totalParticipants) {
