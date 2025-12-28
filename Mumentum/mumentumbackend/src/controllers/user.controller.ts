@@ -55,11 +55,12 @@ const githubCallback = async (req: Request, res: Response) => {
          const githubUser = githubUserRes.data
 
          let user = await User.findOne({ githubId: githubUser.id})
+         const randomNumber = Math.floor(Math.random() * 100) + 1
 
          if (!user) {
             user = await User.create({
                 name: githubUser.name || githubUser.login || "Unknown",
-                username: githubUser.login,
+                username: `${githubUser.login}_github${randomNumber}`,
                 profilePic: githubUser.avatar_url,
                 githubId: githubUser.id,
                 verified: true
@@ -70,8 +71,7 @@ const githubCallback = async (req: Request, res: Response) => {
 
          return res.status(200).json(
             new apiResponse(200,`User created successfully !`,{
-                token,
-                user
+                token
             })
          )
     } catch (error) {
@@ -122,7 +122,7 @@ const updateUser = async (req: Request, res: Response) => {
     await user.save()
 
     return res.status(200).json(
-        new apiResponse(200,"User Updated Successfully !", user)
+        new apiResponse(200,"User Updated Successfully !")
     )
 }
 
@@ -165,7 +165,7 @@ const updateImage = async (req: Request, res: Response) => {
         await user.save()
 
         return res.status(200).json(
-            new apiResponse(200,"File Uploaded Successfully !",user)
+            new apiResponse(200,"File Uploaded Successfully !")
         )
     } catch (error) {
         console.log("Error While Uploading the File : ",error)
@@ -190,7 +190,7 @@ const deleteUser = async (req: Request, res: Response) => {
         }
     
         return res.status(200).json(
-            new apiResponse(200,"User deleted successfully !",user)
+            new apiResponse(200,"User deleted successfully !")
         )
     } catch (error) {
         console.log("Error in Deleting Route : ",error)
@@ -238,7 +238,7 @@ const getUser = async (req: Request, res: Response) => {
     )
 }
 
-const loginWithEmail = async (req: Request, res: Response) => {
+const registerWithEmail = async (req: Request, res: Response) => {
     const {name, username, email, password} = req.body
 
     if (!name) {
@@ -303,13 +303,10 @@ const loginWithEmail = async (req: Request, res: Response) => {
 }
 
 const verifyEmail = async (req: Request, res: Response) => {
-    const {username, email, otp} = req.body
+    const {identifier, otp} = req.body
 
-    if (!username) {
-        throw new apiError(404,"Username is required !")
-    }
-    if (!email) {
-        throw new apiError(404,"Email is required !")
+    if (!identifier) {
+        throw new apiError(404,"Username or Email is required !")
     }
     if (!otp) {
         throw new apiError(404,"Otp is required !")
@@ -317,13 +314,13 @@ const verifyEmail = async (req: Request, res: Response) => {
 
     const user = await User.findOne({
         $or: [
-            {username},
-            {email}
+            {username: identifier},
+            {email: identifier}
         ]
     })
 
     if (!user) {
-        throw new apiError(401,`User not exist neither from username ${username} nor from email ${email} !`)
+        throw new apiError(401,`User not exist with this ${identifier} !`)
     }
     if (user.verified) {
         throw new apiError(404,"User is already verified !")
@@ -346,18 +343,15 @@ const verifyEmail = async (req: Request, res: Response) => {
     const token = await generateToken(user._id)
 
     return res.status(200).json(
-        new apiResponse(200,`${username} verified successfully !`, token)
+        new apiResponse(200,`${user.username} verified successfully !`, token)
     )
 }
 
 const resendEmailOtp = async (req: Request, res: Response) => {
     const {username, email} = req.body
 
-    if (!username) {
-        throw new apiError(404,"Username is required !")
-    }
-    if (!email) {
-        throw new apiError(404,"Email is required !")
+    if (!(username || email)) {
+        throw new apiError(404,"Username or Email is required !")
     }
 
     const user = await User.findOne({
@@ -444,10 +438,109 @@ const forgotPassword = async (req: Request, res: Response) => {
     )
 }
 
-// 3 routes are left 
-// 1. Check forgot email otp
-// 2. Reset Password
-// 3. Login using email or username
+const verifyForgotOtp = async (req: Request, res: Response) => {
+    const { identifier, otp} = req.body
+
+    if (!identifier) {
+        throw new apiError(404,"Username or Email is required !")
+    }
+    if (!otp) {
+        throw new apiError(404,"Otp is required !")
+    }
+
+    const user = await User.findOne({
+        $or: [
+            {username: identifier},
+            {email: identifier}
+        ]
+    })
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (otp !== user.otp) {
+        throw new apiError(404,"Incorrect otp !")
+    }
+    if (user.otpExp && user.otpExp < new Date()) {
+        throw new apiError(404,"Otp expired - Please request a new one !")
+    }
+
+    user.otp = undefined
+    user.otpExp = undefined;
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Otp verified !",user.username)
+    )
+}
+
+const resetPassword = async (req: Request, res: Response) => {
+    const { username, password} = req.body
+
+    if (!username) {
+        throw new apiError(404,"User required !")
+    }
+    if (!password) {
+        throw new apiError(404,"Password required !")
+    }
+
+    const newPassword = await bcrypt.hash(password,10)
+
+    const user = await User.findOne({username})
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (user.otp) {
+        throw new apiError(404,"No request for reset email !")
+    }
+
+    user.password = newPassword
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"User password updated successfully !")
+    )
+}
+
+const login = async (req: Request, res: Response) => {
+    const { identifier, password} = req.body
+
+    if (!identifier) {
+        throw new apiError(404,"Email or Username required !")
+    }
+    if (!password) {
+        throw new apiError(404,"Password required !")
+    }
+
+    const user = await User.findOne({
+        $or: [
+            {username: identifier},
+            {email: identifier}
+        ]
+    })
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (!user.password) {
+        throw new apiError(404,"Password not found !")
+    }
+
+    const correctPassword = await bcrypt.compare(password,user.password)
+
+    if (!correctPassword) {
+        throw new apiError(404,"Incorrect password !")
+    }
+
+    const token = await generateToken(user._id)
+
+    return res.status(200).json(
+        new apiResponse(200,"Login successfully !",{
+            token
+        })
+    )
+}
 
 export {
     redirectToGithub,
@@ -457,8 +550,11 @@ export {
     deleteUser,
     getUser,
     acceptChallenge,
-    loginWithEmail,
+    registerWithEmail,
     verifyEmail,
     resendEmailOtp,
-    forgotPassword
+    forgotPassword,
+    verifyForgotOtp,
+    resetPassword,
+    login
 }

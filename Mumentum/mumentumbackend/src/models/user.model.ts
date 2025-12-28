@@ -79,6 +79,9 @@ const userSchema : Schema<IUser> = new Schema({
     challenge: {
         type: Boolean,
         default: false
+    },
+    password: {
+        type: String
     }
 },{ timestamps: true })
 
