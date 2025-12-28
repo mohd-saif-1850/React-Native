@@ -12,7 +12,7 @@ export interface IUser extends Document{
     dob?: Date;
     profilePic: string;
     subscription: boolean;
-    githubId: string;
+    githubId?: string;
     profilePicId?: string;
     streak?: number;
     points?: number;
@@ -36,7 +36,8 @@ const userSchema : Schema<IUser> = new Schema({
     },
     email: {
         type: String,
-        trim: true
+        trim: true,
+        unique: true
     },
     profilePic: {
         type: String,

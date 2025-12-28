@@ -83,7 +83,7 @@ const githubCallback = async (req: Request, res: Response) => {
 }
 
 const updateUser = async (req: Request, res: Response) => {
-    const { name, username, email, gender, dob} = req.body
+    const { name, username, gender, dob} = req.body
     const userId = req.userId
 
     if (!userId) {
@@ -109,9 +109,6 @@ const updateUser = async (req: Request, res: Response) => {
         } else {
             user.username = username
         }
-    }
-    if (email) {
-        user.email = email
     }
     if (gender) {
         user.gender = gender
@@ -273,7 +270,7 @@ const registerWithEmail = async (req: Request, res: Response) => {
         email
     })
 
-    if (result && !result.data.status) {
+    if (result && !result.data.success) {
         throw new apiError(403,"Some problem occured while sending the Otp !")
     }
 
@@ -542,6 +539,206 @@ const login = async (req: Request, res: Response) => {
     )
 }
 
+const updateEmail = async (req: Request, res: Response) => {
+    const { email } = req.body
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id not found !")
+    }
+    if (!email) {
+        throw new apiError(404,"Email required !")
+    }
+
+    const existedUser = await User.findOne({
+        email
+    })
+
+    if (existedUser) {
+        throw new apiError(200,"Email already linked with another account !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (user.email === email) {
+        throw new apiError(404,"Account already have same email !")
+    }
+
+    const result = await axios.post(`${process.env.MUMENTUM_OTP}/verification`,{
+        username: user.username,
+        email
+    })
+
+    if (result && !result.data.success) {
+        throw new apiError(403,"Some problem occured while sending the Otp !")
+    }
+
+    user.otp = result.data?.data
+    user.otpExp = new Date(Date.now() + 10 * 60 * 1000)
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,`Verify otp sent to your email ${email} !`,{
+            email
+        })
+    )
+}
+
+const verifyUpdateEmail = async (req: Request, res: Response) => {
+    const {email, otp} = req.body
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+    if (!email) {
+        throw new apiError(404,"Email required !")
+    }
+    if (!otp) {
+        throw new apiError(404,"Otp required !")
+    }
+
+    const existedUser = await User.findOne({
+        email
+    })
+
+    if (existedUser) {
+        throw new apiError(401,"Email already linked with another account !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (!user.otp) {
+        throw new apiError(404,"No request for chnage the email !")
+    }
+    if (user.otp !== otp) {
+        throw new apiError(404,"Incorrect Otp !")
+    }
+    if (user.otpExp && user.otpExp < new Date()) {
+        throw new apiError(404,"Otp expired - Please request a new one !")
+    }
+
+    user.otp = undefined
+    user.otpExp = undefined
+    user.email = email
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Email updated successfully !")
+    )
+}
+
+const linkGithub = async (req: Request, res: Response) => {
+    const { code } = req.query
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+    if (!code) {
+        throw new apiError(404,"Code not Provided !")
+    }
+
+    try {
+        const tokenResponse = await axios.post(
+            "https://github.com/login/oauth/access_token",
+            {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                client_secret: process.env.GITHUB_CLIENT_SECRET,
+                code,
+            },
+            {
+                headers: {
+                    Accept: "application/json"
+                }
+            }
+        )
+
+         const accessToken = tokenResponse.data.access_token
+
+         if (!accessToken) {
+            throw new apiError(401,"Failed to get Access Token !")
+         }
+
+         const githubUserRes = await axios.get(
+            "https://api.github.com/user",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                }
+            }
+         )
+
+         const githubUser = githubUserRes.data
+
+         const existedGithubUser = await User.findOne({
+            githubId: githubUser.id
+         })
+
+         const user = await User.findById(userId)
+
+         if (!user) {
+            throw new apiError(401,"User not found !")
+         }
+         if (user.githubId) {
+            throw new apiError(404,"This account already linked with a github account !")
+         }
+         if (existedGithubUser) {
+            throw new apiError(402,"This github account already linked with another account !")
+         }
+
+         user.githubId = githubUser.id
+         await user.save()
+
+         return res.status(200).json(
+            new apiResponse(200,"Github linked successfully !")
+         )
+        
+        } catch(error) {
+            console.log("Error while linking the github with existing account : ",error)
+            return res.status(400).json(
+                new apiResponse(400,"Error while linking the github with existing account !",{
+                    error
+                })
+            )
+        }
+}
+
+const unlinkGithub = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(400,"User not found !")
+    }
+    if (!user.githubId) {
+        throw new apiError(404,"No github account linked with this account !")
+    }
+    if (!user.email) {
+        throw new apiError(404,"User not linked with any email - Please link your email first before doing this operation !")
+    }
+
+    user.githubId = undefined
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Github unlinked successfully !")
+    )
+}
+
+// What if user not set password and how can a user change the password bro
+
 export {
     redirectToGithub,
     githubCallback,
@@ -556,5 +753,9 @@ export {
     forgotPassword,
     verifyForgotOtp,
     resetPassword,
-    login
+    login,
+    updateEmail,
+    verifyUpdateEmail,
+    linkGithub,
+    unlinkGithub
 }
