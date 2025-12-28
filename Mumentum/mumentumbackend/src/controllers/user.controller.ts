@@ -60,7 +60,7 @@ const githubCallback = async (req: Request, res: Response) => {
          if (!user) {
             user = await User.create({
                 name: githubUser.name || githubUser.login || "Unknown",
-                username: `${githubUser.login}_github${randomNumber}`,
+                username: `${githubUser.login}_${githubUser.id}`,
                 profilePic: githubUser.avatar_url,
                 githubId: githubUser.id,
                 verified: true
@@ -224,7 +224,7 @@ const getUser = async (req: Request, res: Response) => {
         throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
     }
 
-    const user = await User.findById(userId)
+    const user = await User.findById(userId).select("-password -otp -otpExp")
 
     if (!user) {
         throw new apiError(500,"Server Failed to Fetch a User !")
@@ -737,7 +737,82 @@ const unlinkGithub = async (req: Request, res: Response) => {
     )
 }
 
-// What if user not set password and how can a user change the password bro
+const setPassword = async (req: Request, res: Response) => {
+    const {password} = req.body
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+    if (!password) {
+        throw new apiError(404,"Password required !")
+    }
+    
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (user.password) {
+        throw new apiError(404,"Password already set !")
+    }
+
+    const hashedPassword = await bcrypt.hash(password,10)
+
+    user.password = hashedPassword
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Password set successfully !")
+    )
+}
+
+const changePassword = async (req: Request, res: Response) => {
+    const {oldPassword, newPassword, confirmPassword} = req.body
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+    if (!oldPassword) {
+        throw new apiError(404,"Old password required !")
+    }
+    if (!newPassword) {
+        throw new apiError(404,"New password required !")
+    }
+    if (!confirmPassword) {
+        throw new apiError(404,"Confirm password required !")
+    }
+    if (newPassword !== confirmPassword) {
+        throw new apiError(404,"New password not mathced with confirm password !")
+    }
+    if (oldPassword === newPassword) {
+        throw new apiError(404,"New password must be different from the old password !")
+    }
+    
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (!user.password) {
+        throw new apiError(404,"No old password found !")
+    }
+    const isPasswordCorrect = await bcrypt.compare(oldPassword,user.password)
+
+    if (!isPasswordCorrect) {
+        throw new apiError(404,"Incorrect old password !")
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword,10)
+
+    user.password = hashedPassword
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Password changed successfully !")
+    )
+}
 
 export {
     redirectToGithub,
@@ -757,5 +832,7 @@ export {
     updateEmail,
     verifyUpdateEmail,
     linkGithub,
-    unlinkGithub
+    unlinkGithub,
+    setPassword,
+    changePassword
 }
