@@ -20,9 +20,11 @@ app.get("/",(req,res) => {
 app.use(generalRateLimit)
 // Routes Configuration
 import userRoutes from "./routes/user.route"
+import taskRoutes from "./routes/todo.route"
 import challengeRoutes from "./routes/challenge.route"
 
 app.use("/api/v1/user",userRoutes)
+app.use("/api/v1/task",taskRoutes)
 app.use("/api/v1/challenge",challengeRoutes)
 
 export default app;

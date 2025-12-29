@@ -13,8 +13,7 @@ const createChallenge = async (req: Request, res: Response) => {
         challenge, 
         points,
         start, 
-        end, 
-        challengeStatus, 
+        end,
         difficulty, 
         isPrivate,
         description
@@ -36,6 +35,22 @@ const createChallenge = async (req: Request, res: Response) => {
         throw new apiError(404,"Title is Required !")
     }
 
+    const maxParticipants = totalParticipants ?? 20
+
+    if (maxParticipants > 20 || maxParticipants < 5) {
+        throw new apiError(404,"Total participants must be between 5 and 20 !")
+    }
+
+    const now = new Date()
+    const startDate = start ? new Date(start) : now
+    const endDate = new Date(end)
+    if (startDate < now) {
+        throw new apiError(400, "Start date cannot be in the past")
+    }
+    if (endDate <= startDate) {
+        throw new apiError(400, "End date must be after start date")
+    }
+
     const user = await User.findById(userId)
     
     if (!user) {
@@ -48,17 +63,13 @@ const createChallenge = async (req: Request, res: Response) => {
         throw new apiError(401,"Subscription required to create a Challenge !")
     }
 
-    const owner = user.username
-    let entryPoints;
-    if (!points && !totalParticipants) {
-        entryPoints = 200 / 20;
-    } else if (points && !totalParticipants) {
-        entryPoints = points / 20;
-    } else {
-        entryPoints = points / totalParticipants;
-    }
+    const owner = user._id
+    const finalPoints = points ?? 200
+    const finalParticipants = maxParticipants
 
-    let rewardPoints;
+    const entryPoints = finalPoints / finalParticipants
+
+    let rewardPoints = entryPoints * 3;
     if (!difficulty || difficulty === "easy") {
         rewardPoints = entryPoints * 3;
     } else if (difficulty === "medium") {
@@ -67,18 +78,25 @@ const createChallenge = async (req: Request, res: Response) => {
         rewardPoints = entryPoints * 10;
     }
 
+    let challengeStatus;
+    if (startDate > now) {
+        challengeStatus = "upcoming"
+    } else {
+        challengeStatus = "active"
+    }
+
     const challeneCreate = await Challenge.create({
         title,
         owner,
         challenge,
-        points,
+        points: finalPoints,
         entryPoints,
         category,
         start,
         end,
         description,
         challengeStatus,
-        totalParticipants,
+        totalParticipants: maxParticipants,
         difficulty,
         isPrivate,
         rewardPoints
@@ -89,8 +107,13 @@ const createChallenge = async (req: Request, res: Response) => {
     }
 
     return res.status(200).json(
-        new apiResponse(200,"Challenge created successfully !", createChallenge)
+        new apiResponse(200,"Challenge created successfully !", challeneCreate)
     )
+}
+
+const joinChallenge = async (req: Request, res: Response) => {
+    const userId = req.userId
+    // const { challengeId, }
 }
 
 export {
