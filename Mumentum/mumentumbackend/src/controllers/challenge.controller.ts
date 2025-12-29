@@ -225,8 +225,115 @@ const submitAnswer = async (req: Request, res: Response) => {
     )
 }
 
+const getChallenge = async (req: Request,res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const challenge = await Challenge.findById(challengeId)
+
+    if (!challenge) {
+        throw new apiError(401,"Challenge not found !")
+    }
+    if (challenge.isPrivate) {
+        throw new apiError(409,"Challenge is private - Only the owner can see !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Challenge fetched successfully !",challenge)
+    )
+}
+
+const getAllChallenges = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+
+    const page = Number(req.query.page) || 1
+    const limit = 10
+    const skip = (page - 1) * limit
+
+    const challenges = await Challenge.find({ isPrivate: false })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+
+    if (challenges.length === 0) {
+        throw new apiError(404,"No challenge found !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Challenges fetched successfully !",challenges)
+    )
+}
+
+const getAllChallengesByDifficulty = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { difficulty } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+
+    const page = Number(req.query.page) || 1
+    const limit = 10
+    const skip = (page - 1) * limit
+
+    const challenges = await Challenge.find({ isPrivate: false, difficulty })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+
+    if (challenges.length === 0) {
+        throw new apiError(404,"No challenge found !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,`${difficulty} challenges fetched successfully !`,challenges)
+    )
+}
+
+const getUserChallenge = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const challenge = await Challenge.findOne({
+        _id: challengeId,
+        owner: userId
+    })
+
+    if (!challenge) {
+        throw new apiError(402,"Challenge not found !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Challenge fetched successfully !",challenge)
+    )
+}
+
+// Get user all challenges is left
+
 export {
     createChallenge,
     joinChallenge,
-    submitAnswer
+    submitAnswer,
+    getChallenge,
+    getAllChallenges,
+    getAllChallengesByDifficulty,
+    getUserChallenge
 }
