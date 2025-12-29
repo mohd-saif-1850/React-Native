@@ -19,6 +19,7 @@ export interface IUser extends Document{
     challenge: boolean;
     challengePoints?: number;
     challengeStreak?: number;
+    deletion?: Date;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -83,6 +84,9 @@ const userSchema : Schema<IUser> = new Schema({
     },
     password: {
         type: String
+    },
+    deletion: {
+        type: Date
     }
 },{ timestamps: true })
 

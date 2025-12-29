@@ -326,7 +326,196 @@ const getUserChallenge = async (req: Request, res: Response) => {
     )
 }
 
-// Get user all challenges is left
+const getUserAllChallenges = async( req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+
+    const challenges = await Challenge.find({
+        owner: userId
+    })
+
+    if (challenges.length === 0) {
+        throw new apiError(403,"No challenges created !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Your challenges fetched successfully !",challenges)
+    )
+}
+
+const deleteChallenge = async ( req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const deletion = await Challenge.findOneAndDelete({
+        _id: challengeId,
+        owner: userId
+    })
+
+    if (!deletion) {
+        throw new apiError(500,"Server failed to delete a challenge !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Challenge deleted successfully !")
+    )
+}
+
+const updateChallenge = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+    const { 
+        title,
+        category,
+        challenge,
+        difficulty,
+        isPrivate,
+        description
+    } = req.body
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const challengeFind = await Challenge.findOne({
+        _id: challengeId,
+        owner: userId
+    })
+
+    if (!challengeFind) {
+        throw new apiError(404,"Challenge not found !")
+    }
+
+    // Now from here i am doing the updation work
+    if (title) {
+        challengeFind.title = title
+    }
+    if (category) {
+        challengeFind.category = category
+    }
+    if (challenge) {
+        challengeFind.challenge = challenge
+    }
+    if (difficulty) {
+        challengeFind.difficulty = difficulty
+    }
+    if (typeof isPrivate === "boolean") {
+        challengeFind.isPrivate = isPrivate
+    }
+    if (description) {
+        challengeFind.description = description
+    }
+
+    await challengeFind.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Challenge updated successfully !")
+    )
+}
+
+const getSubmission = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { submissionId, challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!submissionId) {
+        throw new apiError(404,"Submission Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const answer = await Submission.findOne({
+        _id: submissionId,
+        challengeId
+    })
+
+    if (!answer) {
+        throw new apiError(404,"Answer not found !")
+    }
+
+    if (answer.userId.toString() !== userId.toString()) {
+        const challenge = await Challenge.findOne({
+            _id: challengeId,
+            owner: userId
+        })
+
+        if (!challenge) {
+            throw new apiError(403, "You are not allowed to view this submission")
+        }
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Answer fetched successfully !",answer)
+    )
+}
+
+const getAllSubmission = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const challenge = await Challenge.findOne({
+        _id: challengeId,
+        owner: userId
+    })
+
+    let answers
+
+    if (challenge) {
+        answers = await Submission.find({
+            challengeId
+        })
+    } else {
+        answers = await Submission.find({
+            userId,
+            challengeId
+        })
+    }
+
+    if (answers.length === 0) {
+        throw new apiError(404,"No answers submitted !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Answers fetched successfully !",answers)
+    )
+}
+
+const reviewChallenge = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    // const challenge = await Challenge.
+}
 
 export {
     createChallenge,
@@ -335,5 +524,11 @@ export {
     getChallenge,
     getAllChallenges,
     getAllChallengesByDifficulty,
-    getUserChallenge
+    getUserChallenge,
+    getUserAllChallenges,
+    deleteChallenge,
+    updateChallenge,
+    getSubmission,
+    getAllSubmission,
+    reviewChallenge
 }
