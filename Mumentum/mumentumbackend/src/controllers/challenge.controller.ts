@@ -3,6 +3,8 @@ import { Challenge } from "../models/challenge.model";
 import apiError from "../helpers/apiError";
 import apiResponse from "../helpers/apiResponse";
 import { Request, Response } from "express";
+import { Submission } from "../models/submissionChallenge.model";
+import { Types } from "mongoose";
 
 const createChallenge = async (req: Request, res: Response) => {
     const userId = req.userId
@@ -113,9 +115,118 @@ const createChallenge = async (req: Request, res: Response) => {
 
 const joinChallenge = async (req: Request, res: Response) => {
     const userId = req.userId
-    // const { challengeId, }
+    const { challengeId } = req.body
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id required !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (!user.challenge) {
+        throw new apiError(404,"First accept the challenges !")
+    }
+
+    const challenge = await Challenge.findById(challengeId)
+
+    if (!challenge) {
+        throw new apiError(401,"Challenge not found !")
+    }
+    if (challenge.participants?.some(
+        id => id.toString() === userId.toString()
+    )) {
+        throw new apiError(409, "You already joined this challenge")
+    }
+    // Now challenge status understand !
+    if (challenge.challengeStatus === "upcoming") {
+        throw new apiError(402,"This challenge not started yet !")
+    } else if (challenge.challengeStatus === "expired") {
+        throw new apiError(402,"This challenge is expired !")
+    } else if (challenge.challengeStatus === "completed") {
+        throw new apiError(402,"This challenge already completed !")
+    } else if (challenge.challengeStatus === "filled") {
+        throw new apiError(402,"Max participate joined the challenge !")
+    }
+
+    if (challenge.isPrivate) {
+        throw new apiError(404,"Challenge is private !")
+    }
+    if (user.challengePoints && user.challengePoints < challenge.entryPoints) {
+        throw new apiError(404,"You don't have enough challenge points to participate in this challenge - You can request to the devloper to get more challenge points !")
+    }
+    if ((challenge.participants?.length || 0) >= (challenge.totalParticipants || 20)) {
+        throw new apiError(404,"Max participates already joined the challenge !")
+    }
+    if (challenge.start && challenge.start > new Date()) {
+        throw new apiError(404,"Challenge is not started yet !")
+    }
+    if (challenge.end < new Date()) {
+        throw new apiError(404,"Challenge already ended !")
+    }
+
+    challenge.participants?.push(new Types.ObjectId(userId))
+    await challenge.save()
+
+    user.challengePoints = user.challengePoints ? user.challengePoints - challenge.entryPoints : 0
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Challenge Joined successfully !")
+    )
+}
+
+const submitAnswer = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId, answer} = req.body
+
+    if (!userId) {
+        throw new apiError(404,"User Id required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id required !")
+    }
+    if (!answer) {
+        throw new apiError(404,"Answer required !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(401,"User not found !")
+    }
+    if (!user.challenge) {
+        throw new apiError(404,"First accept the challenges !")
+    }
+
+    const challenge = await Challenge.findById(challengeId)
+
+    if (!challenge) {
+        throw new apiError(401,"Challenge not found !")
+    }
+
+    const submission = await Submission.create({
+        userId,
+        challengeId,
+        answer
+    })
+
+    if (!submission) {
+        throw new apiError(500,"Server failed to submit a answer !")
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Answer submitted successfully !")
+    )
 }
 
 export {
-    createChallenge
+    createChallenge,
+    joinChallenge,
+    submitAnswer
 }
