@@ -6,7 +6,7 @@ export interface IFeedbackChallenge extends Document{
     feedback: string;
     response?: string;
     status: "submitted" | "reviewed" | "resolved";
-    bonusPoints: number;
+    bonusPoints?: number;
 }
 
 const feedbackSchema: Schema<IFeedbackChallenge> = new Schema({
@@ -35,8 +35,7 @@ const feedbackSchema: Schema<IFeedbackChallenge> = new Schema({
         default: "submitted"
     },
     bonusPoints: {
-        type: Number,
-        default: 10
+        type: Number
     }
 },{ timestamps: true })
 

@@ -20,6 +20,7 @@ export interface IUser extends Document{
     challengePoints?: number;
     challengeStreak?: number;
     deletion?: Date;
+    bonusPoints: number;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -87,6 +88,10 @@ const userSchema : Schema<IUser> = new Schema({
     },
     deletion: {
         type: Date
+    },
+    bonusPoints: {
+        type: Number,
+        default: 0
     }
 },{ timestamps: true })
 
