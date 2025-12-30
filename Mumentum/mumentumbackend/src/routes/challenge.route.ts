@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { createChallenge, deleteChallenge, getAllChallenges, getAllChallengesByDifficulty, getAllSubmission, getChallenge, getSubmission, getUserAllChallenges, getUserChallenge, joinChallenge, reviewChallenge, submitAnswer, updateChallenge } from "../controllers/challenge.controller";
+import { createChallenge, deleteChallenge, getAllChallenges, getAllChallengesByDifficulty, getAllSubmission, getChallenge, getSubmission, getUserAllChallenges, getUserChallenge, joinChallenge, reviewChallenge, submitAnswer, updateAnswer, updateChallenge, updateReview } from "../controllers/challenge.controller";
 
 const router = Router()
 
@@ -10,6 +10,7 @@ router.route("/delete-challenge").delete(authMiddleware,deleteChallenge)
 router.route("/update-challenge").patch(authMiddleware,updateChallenge)
 
 router.route("/submit-answer").post(authMiddleware,submitAnswer)
+router.route("/update-answer").patch(authMiddleware,updateAnswer)
 router.route("/get-answer").get(authMiddleware,getSubmission)
 router.route("/get-all-answers").get(authMiddleware,getAllSubmission)
 
@@ -21,5 +22,6 @@ router.route("/get-user-challenge").get(authMiddleware,getUserChallenge)
 router.route("/get-user-all-challenges").get(authMiddleware,getUserAllChallenges)
 
 router.route("/review-challenge").patch(authMiddleware,reviewChallenge)
+router.route("/update-review").patch(authMiddleware,updateReview)
 
 export default router;

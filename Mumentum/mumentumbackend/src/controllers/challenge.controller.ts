@@ -210,6 +210,15 @@ const submitAnswer = async (req: Request, res: Response) => {
         throw new apiError(401,"Challenge not found !")
     }
 
+    const existedAnswer = await Submission.findOne({
+        challengeId,
+        userId
+    })
+
+    if (existedAnswer) {
+        throw new apiError(404,"You already submitted the answer !")
+    }
+
     const submission = await Submission.create({
         userId,
         challengeId,
@@ -222,6 +231,53 @@ const submitAnswer = async (req: Request, res: Response) => {
 
     return res.status(200).json(
         new apiResponse(200,"Answer submitted successfully !")
+    )
+}
+
+const updateAnswer = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId, submissionId} = req.query
+    const { answer } = req.body
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+    if (!submissionId) {
+        throw new apiError(404,"Submission Id is required !")
+    }
+    if (!answer) {
+        throw new apiError(404,"No answer provided to update !")
+    }
+
+    const participate = await Submission.findOne({
+        _id: submissionId,
+        challengeId,
+        userId
+    })
+
+    if (!participate) {
+        throw new apiError(401,"You have not participated in this challenge !")
+    }
+    if (participate.status !== "submitted") {
+        throw new apiError(404,"Answer already reviewed !")
+    }
+
+    const challenge = await Challenge.findOne({
+        _id: challengeId
+    })
+
+    if (!challenge) {
+        throw new apiError(401,"Challenge not found !")
+    }
+
+    participate.answer = answer
+    await participate.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Answer updated successfully !")
     )
 }
 
@@ -505,7 +561,8 @@ const getAllSubmission = async (req: Request, res: Response) => {
 
 const reviewChallenge = async (req: Request, res: Response) => {
     const userId = req.userId
-    const { challengeId } = req.query
+    const { challengeId, submissionId } = req.query
+    const { status, score, feedback} = req.body
 
     if (!userId) {
         throw new apiError(404,"User Id is required !")
@@ -513,14 +570,134 @@ const reviewChallenge = async (req: Request, res: Response) => {
     if (!challengeId) {
         throw new apiError(404,"Challenge Id is required !")
     }
+    if (!submissionId) {
+        throw new apiError(404,"Submission Id is required !")
+    }
+    if (!status) { 
+        throw new apiError(404,"Status is required !")
+    }
 
-    // const challenge = await Challenge.
+    const allowedStatus = ["reviewed","accepted","rejected"]
+
+    if (!allowedStatus.includes(status)) {
+        throw new apiError(404,"Invalid status value !")
+    }
+
+    const challenge = await Challenge.findOne({
+        _id: challengeId,
+        owner: userId
+    })
+
+    if (!challenge) {
+        throw new apiError(401,"Challenge not found !")
+    }
+
+    const answer = await Submission.findOne({
+        _id: submissionId,
+        challengeId
+    })
+
+    if (!answer) {
+        throw new apiError(401,"No answer found !")
+    }
+    if (answer.status !== "submitted") {
+        throw new apiError(404,"Answer already reviewed !")
+    }
+
+    // Updation
+    if (feedback) {
+        answer.feedback = feedback
+    }
+
+    answer.status = status
+
+    if (score !== undefined) {
+        if (score < 0) {
+            throw new apiError(404,"Score can't be negative !")
+        } else {
+            answer.score = score
+        }
+    }
+    await answer.save()
+
+    if (!challenge.completedBy?.includes(answer.userId)) {
+        challenge.completedBy?.push(answer.userId)
+        await challenge.save()
+    }
+
+    return res.status(200).json(
+        new apiResponse(200,"Answer reviewed successfully !")
+    )
+}
+
+const updateReview = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId, submissionId } = req.query
+    const { status, score, feedback} = req.body
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+    if (!submissionId) {
+        throw new apiError(404,"Submission Id is required !")
+    }
+
+    const challenge = await Challenge.findOne({
+        _id: challengeId,
+        owner: userId
+    })
+
+    if (!challenge) {
+        throw new apiError(401,"Challenge not found !")
+    }
+
+    const answer = await Submission.findOne({
+        _id: submissionId,
+        challengeId
+    })
+
+    if (!answer) {
+        throw new apiError(401,"Answer not found !")
+    }
+    if (answer.status === "submitted") {
+        throw new apiError(404,"Answer is not reviewed yet !")
+    }
+
+    const allowedStatus = ["reviewed","accepted","rejected"]
+
+    // Updation
+    if (status) {
+        if (!allowedStatus.includes(status)) {
+            throw new apiError(404,"Invalid status value !")
+        } else {
+            answer.status = status
+        }
+    }
+    if (score !== undefined) {
+        if (score < 0) {
+            throw new apiError(404,"Score can't be negative !")
+        } else {
+            answer.score = score
+        }
+    }
+    if (feedback) {
+        answer.feedback = feedback
+    }
+    await answer.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"Review updated successfully !")
+    )
 }
 
 export {
     createChallenge,
     joinChallenge,
     submitAnswer,
+    updateAnswer,
     getChallenge,
     getAllChallenges,
     getAllChallengesByDifficulty,
@@ -530,5 +707,6 @@ export {
     updateChallenge,
     getSubmission,
     getAllSubmission,
-    reviewChallenge
+    reviewChallenge,
+    updateReview
 }
