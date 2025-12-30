@@ -322,10 +322,6 @@ const getAllChallenges = async (req: Request, res: Response) => {
     .skip(skip)
     .limit(limit)
 
-    if (challenges.length === 0) {
-        throw new apiError(404,"No challenge found !")
-    }
-
     return res.status(200).json(
         new apiResponse(200,"Challenges fetched successfully !",challenges)
     )
@@ -347,10 +343,6 @@ const getAllChallengesByDifficulty = async (req: Request, res: Response) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-
-    if (challenges.length === 0) {
-        throw new apiError(404,"No challenge found !")
-    }
 
     return res.status(200).json(
         new apiResponse(200,`${difficulty} challenges fetched successfully !`,challenges)
@@ -392,10 +384,6 @@ const getUserAllChallenges = async( req: Request, res: Response) => {
     const challenges = await Challenge.find({
         owner: userId
     })
-
-    if (challenges.length === 0) {
-        throw new apiError(403,"No challenges created !")
-    }
 
     return res.status(200).json(
         new apiResponse(200,"Your challenges fetched successfully !",challenges)
@@ -548,10 +536,6 @@ const getAllSubmission = async (req: Request, res: Response) => {
             userId,
             challengeId
         })
-    }
-
-    if (answers.length === 0) {
-        throw new apiError(404,"No answers submitted !")
     }
 
     return res.status(200).json(
