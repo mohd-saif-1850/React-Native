@@ -9,8 +9,11 @@ import cloudinary from "../utils/cloudinary";
 import bcrypt from "bcryptjs"
 
 const redirectToGithub = (req: Request, res: Response) => {
-  const githubAuthUrl = 
-    `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=http://localhost:3000/api/v1/user/github-callback&scope=user:email`;
+  const githubAuthUrl =
+    `https://github.com/login/oauth/authorize` +
+    `?client_id=${process.env.GITHUB_CLIENT_ID}` +
+    `&redirect_uri=https://mumentum-backend.onrender.com/api/v1/user/github-callback` +
+    `&scope=user:email`;
 
   res.redirect(githubAuthUrl);
 };
