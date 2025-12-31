@@ -285,7 +285,8 @@ const registerWithEmail = async (req: Request, res: Response) => {
         password: hashedPassword,
         otp,
         otpExp,
-        verified: false
+        verified: false,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
     })
 
     if (!user) {
@@ -332,8 +333,9 @@ const verifyEmail = async (req: Request, res: Response) => {
         throw new apiError(404,"Incorrect otp !")
     }
 
-    user.otp = undefined,
-    user.otpExp = undefined,
+    user.otp = undefined
+    user.otpExp = undefined
+    user.expiresAt = undefined
     user.verified = true
     await user.save()
 
@@ -378,9 +380,11 @@ const resendEmailOtp = async (req: Request, res: Response) => {
     }
 
     const newOtpExp = new Date(Date.now() + 10 * 60 * 1000)
+    const expires = new Date(Date.now() + 10 * 60 * 1000)
 
     user.otp = newOtp.data.data
     user.otpExp = newOtpExp
+    user.expiresAt = expires
     await user.save()
 
     return res.status(200).json(

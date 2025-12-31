@@ -21,6 +21,7 @@ export interface IUser extends Document{
     challengeStreak?: number;
     deletion?: Date;
     bonusPoints: number;
+    expiresAt?: Date;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -92,6 +93,10 @@ const userSchema : Schema<IUser> = new Schema({
     bonusPoints: {
         type: Number,
         default: 0
+    },
+    expiresAt: {
+        type: Date,
+        index: { expireAfterSeconds: 0 }
     }
 },{ timestamps: true })
 
