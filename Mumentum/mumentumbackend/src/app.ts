@@ -27,4 +27,12 @@ app.use("/api/v1/user",userRoutes)
 app.use("/api/v1/task",taskRoutes)
 app.use("/api/v1/challenge",challengeRoutes)
 
+// Auto Deletion
+import { autoDeleteUsers, deactivateExpiredTasks, expiredChallenge } from "./helpers/autoDeletion"
+
+
+setInterval(expiredChallenge,5 * 60 * 1000)
+setInterval(deactivateExpiredTasks,60 * 60 * 1000)
+setInterval(autoDeleteUsers,6 * 60 * 60 * 1000)
+
 export default app;

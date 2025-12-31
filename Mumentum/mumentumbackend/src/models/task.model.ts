@@ -5,6 +5,7 @@ export interface ITask extends Document{
     task: string;
     isActive: Boolean;
     completion: boolean;
+    expiresAt: Date;
 }
 
 const taskSchema : Schema<ITask> = new Schema({
@@ -25,6 +26,10 @@ const taskSchema : Schema<ITask> = new Schema({
     completion: {
         type: Boolean,
         default: false
+    },
+    expiresAt: {
+        type: Date,
+        required: true
     }
 }, { timestamps: true })
 

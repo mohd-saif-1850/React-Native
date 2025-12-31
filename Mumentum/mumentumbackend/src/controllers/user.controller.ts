@@ -176,26 +176,52 @@ const deleteUser = async (req: Request, res: Response) => {
     const userId = req.userId
 
     if (!userId) {
-        throw new apiError(404,"Please Provide UserId - Try to Re-Login !")
+        throw new apiError(404,"User Id is required !")
     }
 
-    try {
-        const user = await User.findByIdAndDelete(userId)
-        
-        if (!user) {
-            throw new apiError(500,"Server Failed to Delete a User !")
-        }
-    
-        return res.status(200).json(
-            new apiResponse(200,"User deleted successfully !")
-        )
-    } catch (error) {
-        console.log("Error in Deleting Route : ",error)
-        return res.status(401).json(
-            new apiResponse(401,"Some problem occured in the Delete User !",error)
-        )
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(404,"User not found !")
     }
+
+    if (user.deletion) {
+        throw new apiError(400,"User deletion already requested !")
+    }
+
+    user.deletion = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"User deletion scheduled successfully !")
+    )
 }
+
+const undoDeleteUser = async (req: Request, res: Response) => {
+    const userId = req.userId
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+        throw new apiError(404,"User not found !")
+    }
+
+    if (!user.deletion) {
+        throw new apiError(400,"User deletion is not requested !")
+    }
+
+    user.deletion = undefined
+    await user.save()
+
+    return res.status(200).json(
+        new apiResponse(200,"User deletion cancelled successfully !")
+    )
+}
+
 
 const acceptChallenge = async (req: Request, res: Response) => {
     const userId = req.userId
@@ -824,6 +850,7 @@ export {
     updateUser,
     updateImage,
     deleteUser,
+    undoDeleteUser,
     getUser,
     acceptChallenge,
     registerWithEmail,
