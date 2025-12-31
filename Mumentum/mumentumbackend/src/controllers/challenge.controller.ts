@@ -677,6 +677,70 @@ const updateReview = async (req: Request, res: Response) => {
     )
 }
 
+const getChallengeLeaderboard = async (req: Request, res: Response) => {
+    const userId = req.userId
+    const { challengeId } = req.query
+
+    if (!userId) {
+        throw new apiError(404,"User Id is required !")
+    }
+    if (!challengeId) {
+        throw new apiError(404,"Challenge Id is required !")
+    }
+
+    const challenge = await Challenge.findById(challengeId)
+
+    if (!challenge) {
+        throw new apiError(404,"Challenge not found !")
+    }
+
+    const leaderboard = await Submission.aggregate([
+        {
+            $match: {
+                challengeId: challenge._id,
+                status: { $in: ["reviewed","accepted"] }
+            }
+        },
+        {
+            $sort: {
+                score: -1,
+                createdAt: 1
+            }
+        },
+        {
+            $limit: 10
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        { $unwind: "$user" },
+        {
+            $project: {
+                _id: 0,
+                userId: "$user._id",
+                username: "$user.username",
+                profilePic: "$user.profilePic",
+                score: 1,
+                submittedAt: "$createdAt"
+            }
+        }
+    ])
+
+    const rankedLeaderboard = leaderboard.map((item, index) => ({
+        rank: index + 1,
+        ...item
+    }))
+
+    return res.status(200).json(
+        new apiResponse(200,"Leaderboard fetched successfully !",rankedLeaderboard)
+    )
+}
+
 export {
     createChallenge,
     joinChallenge,
@@ -692,5 +756,6 @@ export {
     getSubmission,
     getAllSubmission,
     reviewChallenge,
-    updateReview
+    updateReview,
+    getChallengeLeaderboard
 }

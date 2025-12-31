@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { createChallenge, deleteChallenge, getAllChallenges, getAllChallengesByDifficulty, getAllSubmission, getChallenge, getSubmission, getUserAllChallenges, getUserChallenge, joinChallenge, reviewChallenge, submitAnswer, updateAnswer, updateChallenge, updateReview } from "../controllers/challenge.controller";
+import { createChallenge, deleteChallenge, getAllChallenges, getAllChallengesByDifficulty, getAllSubmission, getChallenge, getChallengeLeaderboard, getSubmission, getUserAllChallenges, getUserChallenge, joinChallenge, reviewChallenge, submitAnswer, updateAnswer, updateChallenge, updateReview } from "../controllers/challenge.controller";
 import { deleteFeedback, getAllFeedback, getFeedback, reviewFeedback, submitFeedback, updateFeedback } from "../controllers/challengeFeedback.controller";
 
 const router = Router()
@@ -31,5 +31,7 @@ router.route("/delete-feedback").delete(authMiddleware,deleteFeedback)
 router.route("/get-feedback").get(authMiddleware,getFeedback)
 router.route("/get-all-feedback").get(authMiddleware,getAllFeedback)
 router.route("/review-feedback").get(authMiddleware,reviewFeedback)
+
+router.route("/challenge-leaderboard").get(authMiddleware,getChallengeLeaderboard)
 
 export default router;
