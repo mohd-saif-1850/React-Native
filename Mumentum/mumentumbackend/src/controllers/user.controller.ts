@@ -72,16 +72,10 @@ const githubCallback = async (req: Request, res: Response) => {
 
          const token = await generateToken(user._id)
 
-         return res.status(200).json(
-            new apiResponse(200,`User created successfully !`,{
-                token
-            })
-         )
+         return res.redirect(`mumentum://auth?token=${token}`);
     } catch (error) {
         console.log(`Errors in GithubCallback : ${error}`)
-        return res.status(400).json(
-            new apiResponse(400,"Login Failed !")
-        )
+        return res.redirect("mumentum://auth?error=login_failed");
     }
 }
 
