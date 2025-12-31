@@ -1,97 +1,98 @@
-import { View, Text, StyleSheet, Pressable, Linking, useColorScheme } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
-import axios from "axios"
+import { Image } from 'expo-image';
+import { Platform, StyleSheet } from 'react-native';
 
-export default function Index() {
-  const scheme = useColorScheme();
-  const dark = scheme === "dark";
+import { HelloWave } from '@/components/hello-wave';
+import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Link } from 'expo-router';
 
-  const githubLogin = async () => {
-    const res = await axios.get(`${process.env.EXPO_PUBLIC_URL}/user/github-login`)
-  }
-
-  const colors = {
-    background: dark ? "#0b0f1a" : "#f5f7fb",
-    primaryText: dark ? "#ffffff" : "#0b0f1a",
-    secondaryText: dark ? "#9aa4b2" : "#5f6c7b",
-    card: dark ? "#11162a" : "#ffffff",
-    github: "#24292e",
-    accent: dark ? "#4cc9f0" : "#4361ee"
-  };
-
+export default function HomeScreen() {
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
-        <Text style={[styles.appName, { color: colors.primaryText }]}>
-          Momentum
-        </Text>
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+        <HelloWave />
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText>
+          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
+          Press{' '}
+          <ThemedText type="defaultSemiBold">
+            {Platform.select({
+              ios: 'cmd + d',
+              android: 'cmd + m',
+              web: 'F12',
+            })}
+          </ThemedText>{' '}
+          to open developer tools.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <Link href="/modal">
+          <Link.Trigger>
+            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+          </Link.Trigger>
+          <Link.Preview />
+          <Link.Menu>
+            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
+            <Link.MenuAction
+              title="Share"
+              icon="square.and.arrow.up"
+              onPress={() => alert('Share pressed')}
+            />
+            <Link.Menu title="More" icon="ellipsis">
+              <Link.MenuAction
+                title="Delete"
+                icon="trash"
+                destructive
+                onPress={() => alert('Delete pressed')}
+              />
+            </Link.Menu>
+          </Link.Menu>
+        </Link>
 
-        <Text style={[styles.tagline, { color: colors.secondaryText }]}>
-          Get started with GitHub
-        </Text>
-
-        <Pressable
-          style={[styles.githubButton, { backgroundColor: colors.github }]}
-          onPress={githubLogin}
-        >
-          <FontAwesome name="github" size={22} color="#ffffff" />
-          <Text style={styles.githubText}>Continue with GitHub</Text>
-        </Pressable>
-      </View>
-
-      <Text style={[styles.footer, { color: colors.secondaryText }]}>
-        Crafted by Mohd Saif
-      </Text>
-    </View>
+        <ThemedText>
+          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText>
+          {`When you're ready, run `}
+          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
+          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        </ThemedText>
+      </ThemedView>
+    </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    borderRadius: 20,
-    paddingVertical: 48,
-    paddingHorizontal: 32,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 6
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
   },
-  appName: {
-    fontSize: 42,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    marginBottom: 10
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
   },
-  tagline: {
-    fontSize: 16,
-    marginBottom: 40
-  },
-  githubButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    width: "100%",
-    paddingVertical: 16,
-    borderRadius: 14
-  },
-  githubText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600"
-  },
-  footer: {
-    position: "absolute",
-    bottom: 28,
-    fontSize: 14
-  }
 });
