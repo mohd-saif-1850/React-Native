@@ -5,7 +5,11 @@ import helmet from "helmet"
 
 const app = express()
 
+app.set("trust proxy", 1);
+
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
 app.use(helmet())
 
 app.use(cors({
@@ -16,6 +20,10 @@ app.use(cors({
 app.get("/",(req,res) => {
   res.send(`Mumentum Backend is Running !`)
 })
+
+app.get("/health", (_, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 // Rate Limiting
 app.use(generalRateLimit)
