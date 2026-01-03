@@ -15,6 +15,10 @@ import {
 import { AntDesign, Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import { StatusBar } from "expo-status-bar"
+import * as SecureStore from "expo-secure-store"
+import axios from "axios"
+import { router } from "expo-router"
+import { wakeMain } from "@/utils/wakeMain"
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -38,6 +42,28 @@ export default function Index() {
     }),
     [isDark]
   )
+
+  useEffect(() => {
+    wakeMain()
+  },[])
+
+  const redirectToGithub = async () => {
+    const authUrl = `${process.env.EXPO_PUBLIC_BACKEND}/user/github-login`;
+    console.log(authUrl)
+    await Linking.openURL(authUrl);
+  }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await SecureStore.getItemAsync("token");
+
+      if (token) {
+        router.replace("/(tabs)");
+      }
+    };
+
+    checkAuth();
+  },[])
 
   useEffect(() => {
     Animated.loop(
@@ -134,7 +160,7 @@ export default function Index() {
         <View style={styles.ctaArea}>
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={haptic}
+            onPress={() => redirectToGithub()}
             style={[styles.primaryAction, { backgroundColor: colors.text }]}
           >
             <AntDesign name="github" size={20} color={colors.bg} />
@@ -147,7 +173,7 @@ export default function Index() {
 
           <TouchableOpacity
             activeOpacity={0.75}
-            onPress={haptic}
+            onPress={() => router.push("/login")}
             style={[
               styles.secondaryAction,
               { borderColor: colors.border, backgroundColor: colors.card }
