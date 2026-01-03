@@ -22,6 +22,8 @@ export interface IUser extends Document{
     deletion?: Date;
     bonusPoints: number;
     expiresAt?: Date;
+    githubAccessToken?: string;
+    githubUsername?: string;
 }
 
 const userSchema : Schema<IUser> = new Schema({
@@ -97,6 +99,12 @@ const userSchema : Schema<IUser> = new Schema({
     expiresAt: {
         type: Date,
         index: { expireAfterSeconds: 0 }
+    },
+    githubUsername: {
+        type: String
+    },
+    githubAccessToken: {
+        type: String
     }
 },{ timestamps: true })
 
