@@ -31,10 +31,12 @@ app.use(generalRateLimit)
 import userRoutes from "./routes/user.route"
 import taskRoutes from "./routes/todo.route"
 import challengeRoutes from "./routes/challenge.route"
+import githubRoutes from "./routes/github.route"
 
 app.use("/api/v1/user",userRoutes)
 app.use("/api/v1/task",taskRoutes)
 app.use("/api/v1/challenge",challengeRoutes)
+app.use("/api/v1/github",githubRoutes)
 
 // Auto Deletion
 import { autoDeleteUsers, deactivateExpiredTasks, expiredChallenge } from "./helpers/autoDeletion"

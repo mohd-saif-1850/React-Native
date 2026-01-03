@@ -66,6 +66,7 @@ const githubCallback = async (req: Request, res: Response) => {
                 username: `${githubUser.login}_${githubUser.id}`,
                 profilePic: githubUser.avatar_url,
                 githubId: githubUser.id,
+                email: githubUser.email,
                 githubUsername: githubUser.login,
                 githubAccessToken: accessToken,
                 verified: true
